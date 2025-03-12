@@ -77,75 +77,60 @@ def clone_repository(repo_url: str, temp_dir: str, depth: int = 1) -> Optional[s
             shutil.rmtree(repo_dir)
         return None
 
-def find_search_files(repo_dir: str) -> List[str]:
-    """Find all files matching the search patterns in the repository."""
-    # File patterns to search for (case insensitive)
+def find_search_files(repo_dir: str, repo_name: str) -> List[str]:
+    """Find all files matching the search patterns in the repository, applying special rules where necessary."""
     patterns = [
         "search.*", "searches.*", "negamax.*", "mybot.*", "alphabeta.*",
         "pvs.*", "search_manager.*", "search_worker.*", "searcher.*"
     ]
 
+    special_rules = {
+        "calvin-chess-engine": "Searcher.java",
+        "Lynx": "negamax.cs",
+        "Prelude": "search.cpp",
+        "FabChess": "alphabeta.rs",
+    }
+
+    print("!!!! ->", repo_name)
+    if repo_name in special_rules:
+        print(special_rules[repo_name])
+        patterns = [special_rules[repo_name]] + patterns
+
     search_files = []
+    for pattern in patterns:
+        found_files = [str(path) for path in Path(repo_dir).rglob(pattern, case_sensitive=False)]
+        search_files.extend(f for f in found_files if not f.lower().endswith('.html') and f not in search_files)
 
-    # Use find command for more efficiency on Unix-like systems
-    try:
-        for pattern in patterns:
-            # Use -iname for case-insensitive matching
-            result = subprocess.run(
-                ["find", repo_dir, "-type", "f", "-iname", pattern, "-not", "-path", "*/\.*"],
-                check=True,
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE,
-                text=True
-            )
-            found_files = result.stdout.strip().split('\n')
-            # Filter out empty strings and HTML files
-            for f in found_files:
-                if f and not f.lower().endswith('.html'):
-                    search_files.append(f)
-    except (subprocess.CalledProcessError, FileNotFoundError):
-        # Fall back to Python's glob if find command fails
-        print("Using Python's glob for file search (this might be slower)...")
-        for pattern in patterns:
-            # Use case-insensitive glob in Python
-            found_files = glob.glob(os.path.join(repo_dir, "**", pattern), recursive=True, case_sensitive=False)
-            for f in found_files:
-                if not f.lower().endswith('.html'):
-                    search_files.append(f)
 
-    # On Windows, try both approaches
-    if not search_files and os.name == 'nt':
-        for pattern in patterns:
-            found_files = glob.glob(os.path.join(repo_dir, "**", pattern), recursive=True, case_sensitive=False)
-            for f in found_files:
-                if not f.lower().endswith('.html'):
-                    search_files.append(f)
+    # print("search_files before:", search_files)
 
-    # Filter out header files if there's a corresponding implementation file
-    preferred_files = []
-    header_files = []
+    # # Apply special rules
+    # if repo_name in special_rules:
+    #     preferred = os.path.join(repo_dir, "**", special_rules[repo_name]["preferred"])
+    #     avoid = os.path.join(repo_dir, "**", special_rules[repo_name]["avoid"])
+    #     if preferred in search_files:
+    #         search_files = [f for f in search_files if f != avoid]
+
+
+    print("search_files after:", search_files)
+
+    # Filter out headers if a corresponding implementation exists
+    preferred_files, header_files = [], {}
 
     for file in search_files:
         lower_file = file.lower()
         if lower_file.endswith(('.h', '.hpp')):
-            header_files.append(file)
+            base_name = os.path.splitext(os.path.basename(file))[0]
+            header_files[base_name] = file
         else:
             preferred_files.append(file)
 
-    # For each header file, check if there's a corresponding implementation file
-    for header in header_files:
-        base_name = os.path.splitext(header)[0]
-        has_implementation = False
-
-        # Check if there's a corresponding implementation file
-        for impl_ext in ['.cpp', '.cc', '.c']:
-            potential_impl = f"{base_name}{impl_ext}"
-            if potential_impl in preferred_files or potential_impl.lower() in [f.lower() for f in preferred_files]:
-                has_implementation = True
-                break
-
-        # If there's no implementation file, keep the header
-        if not has_implementation:
+    for base_name, header in header_files.items():
+        has_impl = any(
+            file.lower().endswith((f"{base_name}.c", f"{base_name}.cc", f"{base_name}.cpp"))
+            for file in preferred_files
+        )
+        if not has_impl:
             preferred_files.append(header)
 
     return preferred_files
@@ -338,20 +323,24 @@ def main():
 
         for i, repo_dir in enumerate(repo_dirs):
             repo_base = os.path.basename(repo_dir)
-            search_files = find_search_files(repo_dir)
-
             repo_name = parse_github_url(repo_urls[i])
+            search_files = find_search_files(repo_dir, get_repo_name_without_username(repo_name))
+
 
             if search_files:
-                for file_path in search_files:
+                for i, file_path in enumerate(search_files):
                     rel_path = Path(file_path).relative_to(repo_dir).as_posix()
-                    print(f"Found {rel_path} in {repo_name}")
-                    all_file_infos.append({
-                        'abs_path': file_path,
-                        'rel_path': rel_path,
-                        'repo': repo_name,
-                        'repo_dir': repo_dir
-                    })
+                    if i == 0:
+                        print(f"Using {rel_path} in {repo_name}")
+                        all_file_infos.append({
+                            'abs_path': file_path,
+                            'rel_path': rel_path,
+                            'repo': repo_name,
+                            'repo_dir': repo_dir
+                        })
+                    else:
+                        print(f"Skipping {rel_path} in {repo_name}")
+
             else:
                 print(f"No matching files found in {repo_name}")
 
@@ -399,12 +388,6 @@ def main():
             order, sorted_infos = plot_similarity_matrix(
                 similarity_matrix, valid_file_infos, args.output_plot
             )
-
-            # Print the sorted order with repository names
-            print("\nFiles ordered by similarity:")
-            for i, info in enumerate(sorted_infos):
-                repo_name = get_repo_name_without_username(info['repo'])
-                print(f"{i+1}. {repo_name} - {info['rel_path']}")
 
         except ImportError as e:
             print(f"Visualization error: {e}")
