@@ -2,7 +2,7 @@
 
 set -e
 
-python main5.py --repos \
+python main6.py --repos \
 https://github.com/tsoj/Nalwald \
 https://github.com/tsoj/Moonbird \
 https://github.com/jhonnold/berserk \
@@ -48,7 +48,6 @@ https://github.com/xu-shawn/Serendipity \
 https://github.com/yl25946/spaghet \
 https://github.com/Quanticade/Quanticade \
 https://github.com/Jochengehtab/Schoenemann \
-https://github.com/Witek902/Caissa \
 https://github.com/mergener/illumina \
 https://github.com/Vast342/Clarity \
 https://github.com/Vast342/Anura \
@@ -78,4 +77,27 @@ https://github.com/nocturn9x/heimdall \
 https://github.com/Quinniboi10/Prelude \
 https://github.com/ProgramciDusunur/Potential \
 https://github.com/ksw0518/Turbulence_v4 \
---output-plot similarity_matrix.png
+https://github.com/Altanis/sacre_dieu \
+https://github.com/toanth/motors \
+https://github.com/Mathmagician8191/Liberty-Chess \
+https://github.com/kz04px/Baislicka \
+https://github.com/kz04px/autaxx \
+https://github.com/cosmobobak/veritas \
+https://github.com/Ciekce/sanctaphraxx \
+https://github.com/zzzzz151/Zataxx \
+https://github.com/Algorhythm-sxv/Cheers \
+https://github.com/raklaptudirm/mess \
+https://github.com/spamdrew128/Apotheosis \
+https://github.com/MinusKelvin/frozenight \
+https://github.com/lithander/Leorik \
+https://github.com/Sazgr/peacekeeper \
+https://github.com/rafid-dev/rice \
+https://github.com/Disservin/Smallbrain \
+https://github.com/JoAnnP38/PedanticRF \
+https://github.com/SnowballSH/Avalanche \
+https://github.com/tsoj/hactar \
+https://github.com/Witek902/Caissa \
+https://github.com/brunocodutra/cinder \
+--output-plot similarity_matrix.png \
+--output-graph similarity_graph.png \
+--temp-dir ./engine_similarity_temp
