@@ -81,7 +81,7 @@ def find_search_files(repo_dir: str, repo_name: str) -> List[str]:
     """Find all files matching the search patterns in the repository, applying special rules where necessary."""
     patterns = [
         "search.*", "searches.*", "negamax.*", "mybot.*", "alphabeta.*",
-        "pvs.*", "search_manager.*", "search_worker.*", "searcher.*"
+        "pvs.*", "search_manager.*", "search_worker.*", "searcher.*", "chess_search.*"
     ]
 
     special_rules = {
@@ -89,30 +89,23 @@ def find_search_files(repo_dir: str, repo_name: str) -> List[str]:
         "Lynx": "negamax.cs",
         "Prelude": "search.cpp",
         "FabChess": "alphabeta.rs",
+        "motors": "caps.rs",
+        "autaxx": "tryhard/search.cpp",
+        "veritas": "engine.rs",
+        "mess": "negamax.go",
+        "Leorik": "IterativeSearch.cs",
+        "peacekeeper": "main.cpp",
+        "PedanticRF": "BasicSearch.cs",
+        "hactar": "search/mod.rs"
     }
 
-    print("!!!! ->", repo_name)
     if repo_name in special_rules:
-        print(special_rules[repo_name])
         patterns = [special_rules[repo_name]] + patterns
 
     search_files = []
     for pattern in patterns:
         found_files = [str(path) for path in Path(repo_dir).rglob(pattern, case_sensitive=False)]
         search_files.extend(f for f in found_files if not f.lower().endswith('.html') and f not in search_files)
-
-
-    # print("search_files before:", search_files)
-
-    # # Apply special rules
-    # if repo_name in special_rules:
-    #     preferred = os.path.join(repo_dir, "**", special_rules[repo_name]["preferred"])
-    #     avoid = os.path.join(repo_dir, "**", special_rules[repo_name]["avoid"])
-    #     if preferred in search_files:
-    #         search_files = [f for f in search_files if f != avoid]
-
-
-    print("search_files after:", search_files)
 
     # Filter out headers if a corresponding implementation exists
     preferred_files, header_files = [], {}
