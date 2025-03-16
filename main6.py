@@ -862,7 +862,7 @@ def analyze_and_visualize_similarity_matrix(
     similarity_matrix = (similarity_matrix - min_val) / (max_val - min_val)
 
     # Convert similarity to distance (1 - similarity)
-    distance_matrix = 1 - similarity_matrix
+    # distance_matrix = 1 - similarity_matrix
 
     # Find optimal number of clusters using silhouette score
     n_clusters = 4  # Default starting point
@@ -906,7 +906,7 @@ def analyze_and_visualize_similarity_matrix(
 
 
         if len(set(clustering.labels_)) > 1:  # Ensure we have at least 2 clusters
-            score = silhouette_score(distance_matrix, clustering.labels_, metric='precomputed')
+            score = silhouette_score(similarity_matrix, clustering.labels_, metric='precomputed')
             print(f"Random number: {random_state}, score: {score}")
             if score > best_score:
                 best_score = score
@@ -930,7 +930,7 @@ def analyze_and_visualize_similarity_matrix(
                 G.add_edge(i, j, weight=similarity_matrix[i, j])
                 edge_data.append((i, j, similarity_matrix[i, j]))
 
-    n = distance_matrix.shape[0]
+    n = similarity_matrix.shape[0]
 
     # Create figure with two subplots
     figsize = (2*max(12, n * 0.4), max(10, n * 0.3))
