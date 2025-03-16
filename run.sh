@@ -90,7 +90,6 @@ https://github.com/rafid-dev/rice \
 https://github.com/Disservin/Smallbrain \
 https://github.com/JoAnnP38/PedanticRF \
 https://github.com/SnowballSH/Avalanche \
-https://github.com/tsoj/hactar \
 https://github.com/Witek902/Caissa \
 https://github.com/brunocodutra/cinder \
 --output-plot similarity_matrix.png \
