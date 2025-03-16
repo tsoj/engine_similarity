@@ -39,6 +39,9 @@ from matplotlib.colors import LinearSegmentedColormap
 from sklearn.manifold import MDS, TSNE
 from matplotlib.collections import LineCollection
 from tqdm import tqdm
+from scipy.cluster import hierarchy
+from scipy.cluster.hierarchy import dendrogram
+
 
 def parse_github_url(url: str) -> str:
     """Extract the repository name from a GitHub URL."""
@@ -267,15 +270,22 @@ def get_embeddings(
 
 def reorder_by_similarity(similarity_matrix: np.ndarray) -> np.ndarray:
     """Reorder the matrix so similar files are close to each other."""
-    from scipy.cluster import hierarchy
-
     # Compute distance matrix (1 - similarity)
     distance_matrix = 1 - similarity_matrix
 
     # Perform hierarchical clustering
     linkage = hierarchy.linkage(distance_matrix[np.triu_indices(distance_matrix.shape[0], k=1)], method='average')
+    # Create the dendrogram from the linkage matrix Z
+    plt.figure(figsize=(10, 5))
+    dendrogram(linkage)
 
-    print("linkage:", linkage)
+    plt.title('Hierarchical Clustering Dendrogram')
+    plt.xlabel('Sample index or Cluster ID')
+    plt.ylabel('Distance')
+
+    plt.savefig("dendrogram.png", dpi=280, bbox_inches='tight')
+    print(f"Saved matrix visualization to {"dendrogram.png"}")
+    plt.close()
 
     # Get the leaf ordering
     ordering = hierarchy.leaves_list(linkage)
@@ -882,15 +892,19 @@ def analyze_and_visualize_similarity_matrix(
     #     metric='precomputed',
     #     linkage='average'
     # ).fit(distance_matrix)
+    if False:
+        clustering = SpectralClustering(
+                n_clusters=best_n_clusters,
+                affinity='precomputed',
+                random_state=42,
+                assign_labels='kmeans'
+            ).fit(similarity_matrix)
 
-    clustering = SpectralClustering(
-            n_clusters=best_n_clusters,
-            affinity='precomputed',
-            random_state=42,
-            assign_labels='kmeans'
-        ).fit(similarity_matrix)
-
-    cluster_labels = clustering.labels_
+        cluster_labels = clustering.labels_
+    else:
+        condensed_dist = distance_matrix[np.triu_indices(distance_matrix.shape[0], k=1)]
+        Z = hierarchy.linkage(condensed_dist, method='average')
+        cluster_labels = hierarchy.fcluster(Z, best_n_clusters, criterion='maxclust') - 1
 
     # Create NetworkX graph for visualization
     G = nx.Graph()
