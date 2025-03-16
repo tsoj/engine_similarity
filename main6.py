@@ -865,7 +865,7 @@ def analyze_and_visualize_similarity_matrix(
     distance_matrix = 1 - similarity_matrix
 
     # Find optimal number of clusters using silhouette score
-    best_n_clusters = 5  # Default starting point
+    best_n_clusters = 4  # Default starting point
     best_score = -1
 
     # Try different cluster counts from 2 to min(10, n-1)
