@@ -27,7 +27,6 @@ import networkx.algorithms.community as nx_comm
 from sklearn.cluster import SpectralClustering
 from sklearn.manifold import MDS
 import matplotlib.colors as mcolors
-from netgraph import Graph
 import numpy as np
 from typing import List
 import matplotlib.pyplot as plt
