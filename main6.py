@@ -865,12 +865,12 @@ def analyze_and_visualize_similarity_matrix(
     distance_matrix = 1 - similarity_matrix
 
     # Find optimal number of clusters using silhouette score
-    best_n_clusters = 4  # Default starting point
-    best_score = -1
+    n_clusters = 4  # Default starting point
+    # random_state = -1
 
     # Try different cluster counts from 2 to min(10, n-1)
-    max_clusters = min(10, len(labels) - 1) if len(labels) > 2 else 2
-    silhouette_scores = []
+    # max_clusters = min(10, len(labels) - 1) if len(labels) > 2 else 2
+    # silhouette_scores = []
 
     # for n_clusters in range(2, max_clusters + 1):
     #     clustering = AgglomerativeClustering(
@@ -893,14 +893,26 @@ def analyze_and_visualize_similarity_matrix(
     #     metric='precomputed',
     #     linkage='average'
     # ).fit(distance_matrix)
-    clustering = SpectralClustering(
-            n_clusters=best_n_clusters,
-            affinity='precomputed',
-            random_state=42,
-            assign_labels='kmeans'
-        ).fit(similarity_matrix)
+    #
+    cluster_labels = None
+    best_score = -1
+    for random_state in range(0, 100):
+        clustering = SpectralClustering(
+                n_clusters=n_clusters,
+                affinity='precomputed',
+                random_state=random_state,
+                assign_labels='kmeans'
+            ).fit(similarity_matrix)
 
-    cluster_labels = clustering.labels_
+
+        if len(set(clustering.labels_)) > 1:  # Ensure we have at least 2 clusters
+            score = silhouette_score(distance_matrix, clustering.labels_, metric='precomputed')
+            print(f"Random number: {random_state}, score: {score}")
+            if score > best_score:
+                best_score = score
+                cluster_labels = clustering.labels_
+
+    assert cluster_labels
 
     # Create NetworkX graph for visualization
     G = nx.Graph()
@@ -918,8 +930,11 @@ def analyze_and_visualize_similarity_matrix(
                 G.add_edge(i, j, weight=similarity_matrix[i, j])
                 edge_data.append((i, j, similarity_matrix[i, j]))
 
+    n = distance_matrix.shape[0]
+
     # Create figure with two subplots
-    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(20, 10))
+    figsize = (2*max(12, n * 0.4), max(10, n * 0.3))
+    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=figsize)
 
     # 1. Heatmap visualization with hierarchical clustering
     # Sort by cluster
@@ -927,14 +942,25 @@ def analyze_and_visualize_similarity_matrix(
     sorted_matrix = similarity_matrix[idx][:, idx]
     sorted_labels = [labels[i] for i in idx]
 
-    # Custom colormap: white to blue
-    cmap = LinearSegmentedColormap.from_list("white_to_blue", ["#ffffff", "#1f77b4"])
+    # # Custom colormap: white to blue
+    # cmap = LinearSegmentedColormap.from_list("white_to_blue", ["#ffffff", "#1f77b4"])
 
-    # Plot heatmap
-    sns.set(font_scale=0.5)
-    sns.heatmap(sorted_matrix, xticklabels=sorted_labels, yticklabels=sorted_labels,
-                cmap=cmap, vmin=0, vmax=1, ax=ax1, cbar_kws={'label': 'Similarity'})
-    ax1.set_title(f'Similarity Matrix (Sorted by {best_n_clusters} Clusters)')
+    # # Plot heatmap
+    # sns.set(font_scale=0.5)
+    # sns.heatmap(sorted_matrix, xticklabels=sorted_labels, yticklabels=sorted_labels,
+    #             cmap=cmap, vmin=0, vmax=1, ax=ax1, cbar_kws={'label': 'Similarity'})
+    # ax1.set_title(f'Similarity Matrix (Sorted by {n_clusters} Clusters)')
+
+
+    # Create the heatmap with increased font size for better readability
+    ax = sns.heatmap(sorted_matrix, annot=True, fmt=".2f", cmap="Blues",
+                    xticklabels=labels, yticklabels=labels, annot_kws={"size": max(8, 12 - 0.1*len(sorted_labels))})
+
+    # Rotate x-axis labels for better readability
+    plt.xticks(rotation=45, ha='right', fontsize=max(8, 12 - 0.1*n))
+    plt.yticks(rotation=0, fontsize=max(8, 12 - 0.1*n))
+
+    plt.title("Code Similarity Matrix (Sorted)", fontsize=max(12, 14 - 0.05*n))
 
     # Draw cluster boundaries
     cluster_sizes = np.bincount(cluster_labels[idx])
@@ -953,7 +979,7 @@ def analyze_and_visualize_similarity_matrix(
         if G_layout.nodes[u]['cluster'] == G_layout.nodes[v]['cluster']:
             # Reduce distance (increase attraction) for nodes in same cluster
             # Original weight is between 0-1, use a scaling factor to emphasize cluster relationships
-            G_layout[u][v]['weight'] = G_layout[u][v]['weight'] * 3.0  # Amplify intra-cluster edge weights
+            G_layout[u][v]['weight'] = G_layout[u][v]['weight'] * 2.5  # Amplify intra-cluster edge weights
 
     # Use spring layout with the modified weights
     # In spring layout, higher weights mean stronger springs (shorter distances)
@@ -984,13 +1010,13 @@ def analyze_and_visualize_similarity_matrix(
     # Create a list of colors for the clusters
     cluster_colors = [
         (0.8392156862745098,  0.15294117647058825, 0.1568627450980392  ),  # d62728 red
-        (0.09019607843137255, 0.7450980392156863,  0.8117647058823529),    # 17becf türkis
+        (0.4980392156862745,  0.4980392156862745,  0.4980392156862745  ),  # 7f7f7f grey
         (0.17254901960784313, 0.6274509803921569,  0.17254901960784313 ),  # 2ca02c green
-        (1.0,                 0.4980392156862745,  0.054901960784313725),  # ff7f0e orange
         (0.5803921568627451,  0.403921568627451,   0.7411764705882353  ),  # 9467bd purple
+        (0.09019607843137255, 0.7450980392156863,  0.8117647058823529),    # 17becf türkis
+        (1.0,                 0.4980392156862745,  0.054901960784313725),  # ff7f0e orange
         (0.12156862745098039, 0.4666666666666667,  0.7058823529411765  ),  # 1f77b4 blue
         (0.8901960784313725,  0.4666666666666667,  0.7607843137254902  ),  # e377c2 pink
-        (0.4980392156862745,  0.4980392156862745,  0.4980392156862745  ),  # 7f7f7f grey
         (0.7372549019607844,  0.7411764705882353,  0.13333333333333333 ),  # bcbd22 yellow
         (0.5490196078431373,  0.33725490196078434, 0.29411764705882354 ),  # 8c564b brown
 
@@ -1020,7 +1046,7 @@ def analyze_and_visualize_similarity_matrix(
     legend_elements = [plt.Line2D([0], [0], marker='o', color='w',
                        markerfacecolor=cluster_colors[i], markersize=10,
                        label=f'Cluster {i+1}')
-                       for i in range(best_n_clusters)]
+                       for i in range(n_clusters)]
     ax2.legend(handles=legend_elements, loc='upper right')
 
     ax2.axis('off')
