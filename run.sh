@@ -50,7 +50,6 @@ https://github.com/Quanticade/Quanticade \
 https://github.com/Jochengehtab/Schoenemann \
 https://github.com/mergener/illumina \
 https://github.com/Vast342/Clarity \
-https://github.com/Vast342/Anura \
 https://github.com/analog-hors/Boychesser \
 https://github.com/DeveloperPaul123/byte-knight \
 https://github.com/folkertvanheusden/Dog \
@@ -61,11 +60,9 @@ https://github.com/yukarichess/yukari \
 https://github.com/87flowers/bannou \
 https://github.com/MinusKelvin/ice4 \
 https://github.com/zzzzz151/Starzix \
-https://github.com/zzzzz151/Starlynn \
 https://github.com/martinnovaak/motor \
 https://github.com/pkrisz99/Renegade \
 https://github.com/Mcthouacbb/Sirius \
-https://github.com/Mcthouacbb/Aquarii \
 https://github.com/liamt19/Horsie \
 https://github.com/liamt19/Lizard \
 https://github.com/liamt19/Peeper \
@@ -82,7 +79,6 @@ https://github.com/toanth/motors \
 https://github.com/Mathmagician8191/Liberty-Chess \
 https://github.com/kz04px/Baislicka \
 https://github.com/kz04px/autaxx \
-https://github.com/cosmobobak/veritas \
 https://github.com/Ciekce/sanctaphraxx \
 https://github.com/zzzzz151/Zataxx \
 https://github.com/Algorhythm-sxv/Cheers \
