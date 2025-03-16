@@ -846,6 +846,7 @@ def analyze_and_visualize_similarity_matrix(
     cmap = LinearSegmentedColormap.from_list("white_to_blue", ["#ffffff", "#1f77b4"])
 
     # Plot heatmap
+    sns.set(font_scale=0.5)
     sns.heatmap(sorted_matrix, xticklabels=sorted_labels, yticklabels=sorted_labels,
                 cmap=cmap, vmin=0, vmax=1, ax=ax1, cbar_kws={'label': 'Similarity'})
     ax1.set_title(f'Similarity Matrix (Sorted by {best_n_clusters} Clusters)')
@@ -917,8 +918,8 @@ def analyze_and_visualize_similarity_matrix(
     # Instead of drawing edges with draw_networkx_edges,
     # draw each edge with a color gradient:
     for n1, n2 in G_viz.edges():
-        alpha = np.power(G_viz[n1][n2]['weight'], 6.0)
-        width = alpha * 4.0
+        alpha = np.power(G_viz[n1][n2]['weight'], 5.9)
+        width = max(0.5, alpha * 4.0)
         color1 = node_colors[n1][:3]
         color2 = node_colors[n2][:3]
         draw_gradient_edge(ax2, pos, n1, n2, color2, color1, n_points=200, lw=width, alpha=alpha)
@@ -928,7 +929,7 @@ def analyze_and_visualize_similarity_matrix(
 
     # Draw labels with smaller font
     nx.draw_networkx_labels(G, pos, labels={i: label for i, label in enumerate(labels)},
-                            font_size=8, ax=ax2)
+                            font_size=10, ax=ax2)
 
     # Add a legend for clusters
     legend_elements = [plt.Line2D([0], [0], marker='o', color='w',
@@ -941,7 +942,7 @@ def analyze_and_visualize_similarity_matrix(
 
     # Adjust layout and save figure
     plt.tight_layout()
-    plt.savefig(output_graph, dpi=500, bbox_inches='tight')
+    plt.savefig(output_graph, dpi=300, bbox_inches='tight')
     plt.close()
 
 
