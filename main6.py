@@ -28,6 +28,15 @@ from sklearn.cluster import SpectralClustering
 from sklearn.manifold import MDS
 import matplotlib.colors as mcolors
 from netgraph import Graph
+import numpy as np
+from typing import List
+import matplotlib.pyplot as plt
+import seaborn as sns
+from sklearn.cluster import AgglomerativeClustering
+from sklearn.metrics import silhouette_score
+import networkx as nx
+from matplotlib.colors import LinearSegmentedColormap
+from sklearn.manifold import MDS, TSNE
 
 def parse_github_url(url: str) -> str:
     """Extract the repository name from a GitHub URL."""
@@ -445,92 +454,490 @@ def analyze_and_visualize_clusters_OLD(similarity_matrix, labels, output_graph, 
 
     return G, cluster_labels, pos
 
+def create_similarity_graph_OLD(similarity_matrix: np.ndarray, file_infos: List[Dict],
+                           threshold: float = 0.5, cluster_labels: List[int] = None,
+                           output_file: str = None):
+    """
+    Create a graph visualization where:
+    - Nodes are files
+    - Edges are drawn between files with similarity above the threshold
+    - Nodes are colored by cluster if cluster_labels are provided
+    """
+    import networkx as nx
+
+    # Create a graph
+    G = nx.Graph()
+
+    # Add nodes with repository names
+    for i, info in enumerate(file_infos):
+        repo_name = get_repo_name_without_username(info['repo'])
+        cluster = cluster_labels[i] if cluster_labels is not None else 0
+        G.add_node(i, name=repo_name, cluster=cluster, file=info['rel_path'])
+
+    # Add edges for similarities above threshold
+    for i in range(similarity_matrix.shape[0]):
+        for j in range(i+1, similarity_matrix.shape[0]):
+            similarity = similarity_matrix[i, j]
+            if similarity >= threshold:
+                G.add_edge(i, j, weight=similarity, width=similarity * 3)
+
+    # Check if we have any edges
+    if len(G.edges) == 0:
+        print(f"No edges with similarity above {threshold}. Lowering threshold...")
+        # Find the highest similarity and use a slightly lower threshold
+        max_sim = 0
+        for i in range(similarity_matrix.shape[0]):
+            for j in range(i+1, similarity_matrix.shape[0]):
+                max_sim = max(max_sim, similarity_matrix[i, j])
+
+        new_threshold = max(0.1, max_sim * 0.8)  # Use 80% of max similarity as threshold
+        print(f"New threshold: {new_threshold:.2f}")
+
+        for i in range(similarity_matrix.shape[0]):
+            for j in range(i+1, similarity_matrix.shape[0]):
+                similarity = similarity_matrix[i, j]
+                if similarity >= new_threshold:
+                    G.add_edge(i, j, weight=similarity, width=similarity * 3)
+
+    # Prepare the visualization
+    plt.figure(figsize=(14, 10))
+
+    # Position nodes using force-directed layout
+    pos = nx.spring_layout(G, k=1.5/np.sqrt(len(G.nodes)), seed=42)
+
+    # Get node colors based on cluster
+    if cluster_labels is not None:
+        n_clusters = len(set(cluster_labels))
+        cmap = plt.cm.get_cmap('tab10', n_clusters)
+        node_colors = [cmap(G.nodes[i]['cluster']) for i in G.nodes]
+    else:
+        node_colors = 'skyblue'
+
+    # Draw the nodes
+    nx.draw_networkx_nodes(G, pos, node_size=700, node_color=node_colors, alpha=0.8)
+
+    # Draw the edges with width proportional to similarity
+    edges = G.edges(data=True)
+    edge_widths = [d['width'] for u, v, d in edges]
+    nx.draw_networkx_edges(G, pos, width=edge_widths, alpha=0.5, edge_color='gray')
+
+    # Add labels
+    labels = {i: G.nodes[i]['name'] for i in G.nodes}
+    nx.draw_networkx_labels(G, pos, labels=labels, font_size=10)
+
+    # Create legend for clusters
+    if cluster_labels is not None:
+        unique_clusters = sorted(set(cluster_labels))
+        legend_elements = [plt.Line2D([0], [0], marker='o', color='w',
+                                    markerfacecolor=cmap(c), markersize=10,
+                                    label=f'Cluster {c+1}')
+                            for c in unique_clusters]
+        plt.legend(handles=legend_elements, loc='upper right')
+
+    plt.title("Repository Similarity Graph")
+    plt.axis('off')
+
+    # Save if output file is specified
+    if output_file:
+        plt.savefig(output_file, dpi=300, bbox_inches='tight')
+        print(f"Saved graph visualization to {output_file}")
+
+    try:
+        plt.show()
+    except:
+        print("Could not display plot (likely running in a non-GUI environment)")
+
+    # return G
+
+def analyze_and_visualize_similarity_matrix_OLD(
+    similarity_matrix: np.ndarray,
+    labels: List[str],
+    output_graph: str):
+    """
+    Analyze a similarity matrix to find optimal clustering and visualize the results.
+
+    Parameters:
+    -----------
+    similarity_matrix : np.ndarray
+        Square matrix with similarity scores between 0.0 and 1.0
+    labels : List[str]
+        Labels for each node/item in the similarity matrix
+    output_graph : str
+        File path to save the visualization
+
+    Returns:
+    --------
+    dict
+        Dictionary containing cluster assignments and analysis metrics
+    """
+    # Ensure matrix is symmetric
+    if not np.allclose(similarity_matrix, similarity_matrix.T, rtol=1e-5, atol=1e-8):
+        print("Warning: Similarity matrix is not symmetric. Symmetrizing...")
+        similarity_matrix = (similarity_matrix + similarity_matrix.T) / 2
+
+
+    min_val = np.min(similarity_matrix)
+    max_val = np.max(similarity_matrix)
+    similarity_matrix = (similarity_matrix - min_val) / (max_val - min_val)
+
+    # Convert similarity to distance (1 - similarity)
+    distance_matrix = 1 - similarity_matrix
+
+    # Find optimal number of clusters using silhouette score
+    best_n_clusters = 2  # Default starting point
+    best_score = -1
+
+    # Try different cluster counts from 2 to min(10, n-1)
+    max_clusters = min(10, len(labels) - 1) if len(labels) > 2 else 2
+    silhouette_scores = []
+
+    # for n_clusters in range(2, max_clusters + 1):
+    #     clustering = AgglomerativeClustering(
+    #         n_clusters=n_clusters,
+    #         metric='precomputed',
+    #         linkage='average'
+    #     ).fit(distance_matrix)
+
+    #     if len(set(clustering.labels_)) > 1:  # Ensure we have at least 2 clusters
+    #         score = silhouette_score(distance_matrix, clustering.labels_, metric='precomputed')
+    #         silhouette_scores.append(score)
+
+    #         if score > best_score:
+    #             best_score = score
+    #             best_n_clusters = n_clusters
+    best_n_clusters = 8
+    # Apply the best clustering
+    clustering = SpectralClustering(
+        n_clusters=best_n_clusters,
+        metric='precomputed',
+        linkage='average'
+    ).fit(distance_matrix)
+
+    cluster_labels = clustering.labels_
+
+    # Create NetworkX graph for visualization
+    G = nx.Graph()
+
+    # Add nodes with attributes
+    for i, label in enumerate(labels):
+        G.add_node(i, label=label, cluster=cluster_labels[i])
+
+    # Add edges with weights (only if similarity is above threshold)
+    threshold = 0.3  # Adjust based on your data
+    for i in range(len(labels)):
+        for j in range(i + 1, len(labels)):
+            if similarity_matrix[i, j] > threshold:
+                G.add_edge(i, j, weight=similarity_matrix[i, j])
+
+    # Create figure with two subplots
+    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(20, 10))
+
+    # 1. Heatmap visualization with hierarchical clustering
+    # Sort by cluster
+    idx = np.argsort(cluster_labels)
+    sorted_matrix = similarity_matrix[idx][:, idx]
+    sorted_labels = [labels[i] for i in idx]
+
+    # Custom colormap: white to blue
+    cmap = LinearSegmentedColormap.from_list("white_to_blue", ["#ffffff", "#1f77b4"])
+
+    # Plot heatmap
+    sns.heatmap(sorted_matrix, xticklabels=sorted_labels, yticklabels=sorted_labels,
+                cmap=cmap, vmin=0, vmax=1, ax=ax1, cbar_kws={'label': 'Similarity'})
+    ax1.set_title(f'Similarity Matrix (Sorted by {best_n_clusters} Clusters)')
+
+    # Draw cluster boundaries
+    cluster_sizes = np.bincount(cluster_labels[idx])
+    boundaries = np.cumsum(cluster_sizes)[:-1]
+
+    for boundary in boundaries:
+        ax1.axhline(y=boundary, color='red', linestyle='-', linewidth=1)
+        ax1.axvline(x=boundary, color='red', linestyle='-', linewidth=1)
+
+    # 2. Network graph visualization
+    pos = nx.spring_layout(G, seed=42)  # For reproducible layout
+
+    # Create a list of colors for the clusters
+    cluster_colors = plt.cm.tab10(np.linspace(0, 1, best_n_clusters))
+    node_colors = [cluster_colors[cluster_labels[node]] for node in G.nodes()]
+
+    # Draw the graph
+    nx.draw_networkx_nodes(G, pos, node_color=node_colors, ax=ax2, node_size=300, alpha=0.8)
+
+    # Draw edges with width based on weight
+    edge_weights = [G[u][v]['weight'] * 3 for u, v in G.edges()]
+    nx.draw_networkx_edges(G, pos, width=edge_weights, alpha=0.5, ax=ax2)
+
+    # Draw labels with smaller font
+    nx.draw_networkx_labels(G, pos, labels={i: label for i, label in enumerate(labels)},
+                            font_size=8, ax=ax2)
+
+    # Add a legend for clusters
+    legend_elements = [plt.Line2D([0], [0], marker='o', color='w',
+                       markerfacecolor=cluster_colors[i], markersize=10,
+                       label=f'Cluster {i+1}')
+                       for i in range(best_n_clusters)]
+    ax2.legend(handles=legend_elements, loc='upper right')
+
+    ax2.set_title(f'Network Graph (Optimal Clusters: {best_n_clusters}, Silhouette Score: {best_score:.3f})')
+    ax2.axis('off')
+
+    # Adjust layout and save figure
+    plt.tight_layout()
+    plt.savefig(output_graph, dpi=300, bbox_inches='tight')
+    plt.close()
+
+    # Print analysis info
+    print(f"Optimal number of clusters: {best_n_clusters}")
+    print(f"Silhouette score: {best_score:.3f}")
+
+    # Return analysis results
+    return {
+        'n_clusters': best_n_clusters,
+        'silhouette_score': best_score,
+        'cluster_assignments': {labels[i]: cluster_labels[i] for i in range(len(labels))},
+        'cluster_sizes': {i: np.sum(cluster_labels == i) for i in range(best_n_clusters)}
+    }
+
 def analyze_and_visualize_similarity_matrix(
     similarity_matrix: np.ndarray,
     labels: List[str],
-    output_graph,
-    n_clusters: int = 8,
-    edge_percentage: float = 0.5,  # Keep top 30% of edges by default
+    output_graph: str,
+    layout_method: str = "community"): # Added layout parameter
+    """
+    Analyze a similarity matrix to find optimal clustering and visualize the results.
 
-):
+    Parameters:
+    -----------
+    similarity_matrix : np.ndarray
+        Square matrix with similarity scores between 0.0 and 1.0
+    labels : List[str]
+        Labels for each node/item in the similarity matrix
+    output_graph : str
+        File path to save the visualization
+    layout_method : str
+        Method for graph layout visualization:
+        - "community": Force-directed with community-aware positioning
+        - "mds": Multidimensional scaling based on distances
+        - "tsne": t-SNE embedding
+        - "circular_grouped": Circular layout grouped by clusters
+        - "spring": Standard spring layout (default NetworkX)
 
-    # g = nx.from_numpy_array(similarity_matrix)
+    Returns:
+    --------
+    dict
+        Dictionary containing cluster assignments and analysis metrics
+    """
+    # Ensure matrix is symmetric
+    if not np.allclose(similarity_matrix, similarity_matrix.T, rtol=1e-5, atol=1e-8):
+        print("Warning: Similarity matrix is not symmetric. Symmetrizing...")
+        similarity_matrix = (similarity_matrix + similarity_matrix.T) / 2
 
-    # # Remove self-loops
-    # g.remove_edges_from(nx.selfloop_edges(g))
+    # Normalize edge weights to be between 0.0 and 1.0
+    min_val = np.min(similarity_matrix)
+    max_val = np.max(similarity_matrix)
+    similarity_matrix = (similarity_matrix - min_val) / (max_val - min_val)
 
+    # Convert similarity to distance (1 - similarity)
+    distance_matrix = 1 - similarity_matrix
 
+    # Find optimal number of clusters using silhouette score
+    best_n_clusters = 8  # Default starting point
+    best_score = -1
 
-    # 2. Perform spectral clustering
-    sc = SpectralClustering(
-        n_clusters=n_clusters, affinity='precomputed',
-        assign_labels='discretize', random_state=42
-    )
-    cluster_labels = sc.fit_predict(similarity_matrix)
+    # Try different cluster counts from 2 to min(10, n-1)
+    max_clusters = min(10, len(labels) - 1) if len(labels) > 2 else 2
+    silhouette_scores = []
 
+    # for n_clusters in range(2, max_clusters + 1):
+    #     clustering = AgglomerativeClustering(
+    #         n_clusters=n_clusters,
+    #         metric='precomputed',
+    #         linkage='average'
+    #     ).fit(distance_matrix)
 
-    g = nx.Graph()
+    #     if len(set(clustering.labels_)) > 1:  # Ensure we have at least 2 clusters
+    #         score = silhouette_score(distance_matrix, clustering.labels_, metric='precomputed')
+    #         silhouette_scores.append(score)
 
-    # Add nodes with labels and cluster assignments
-    for i, (label, cluster) in enumerate(zip(labels, cluster_labels)):
-        g.add_node(i, label=label, cluster=int(cluster))
+    #         if score > best_score:
+    #             best_score = score
+    #             best_n_clusters = n_clusters
 
-    # Extract all edge weights from upper triangle (undirected graph)
-    edge_weights = []
-    for i in range(similarity_matrix.shape[0]):
-        for j in range(i + 1, similarity_matrix.shape[1]):
-            edge_weights.append((i, j, similarity_matrix[i, j]))
+    # Apply the best clustering
+    # clustering = AgglomerativeClustering(
+    #     n_clusters=best_n_clusters,
+    #     metric='precomputed',
+    #     linkage='average'
+    # ).fit(distance_matrix)
 
-    # Sort by weight descending
-    edge_weights.sort(key=lambda x: x[2], reverse=True)
+    clustering = SpectralClustering(
+            n_clusters=best_n_clusters,
+            affinity='precomputed',
+            random_state=42,
+            assign_labels='kmeans'
+        ).fit(similarity_matrix)
 
-    # Calculate how many edges to keep
-    total_possible_edges = len(edge_weights)
-    edges_to_keep = int(total_possible_edges * edge_percentage)
+    cluster_labels = clustering.labels_
 
-    # Add only the top percentage of edges
-    for i, j, weight in edge_weights[:edges_to_keep]:
-        g.add_edge(i, j, weight=weight)
+    # Create NetworkX graph for visualization
+    G = nx.Graph()
 
-    # Add node labels
+    # Add nodes with attributes
     for i, label in enumerate(labels):
-        g.nodes[i]['label'] = label
+        G.add_node(i, label=label, cluster=cluster_labels[i])
 
-    node_to_community = {i: c for i, c in enumerate(cluster_labels)}
-    print(node_to_community)
+    # Add edges with weights (only if similarity is above threshold)
+    threshold = 0.1  # Adjust based on your data
+    for i in range(len(labels)):
+        for j in range(i + 1, len(labels)):
+            if similarity_matrix[i, j] > threshold:
+                G.add_edge(i, j, weight=similarity_matrix[i, j])
 
-    cluster_cmap = matplotlib.colormaps['tab10']
-    node_color = {i: cluster_cmap(cluster_labels[i]) for i in range(len(labels))}
+    # Create figure with two subplots
+    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(20, 10))
 
+    # 1. Heatmap visualization with hierarchical clustering
+    # Sort by cluster
+    idx = np.argsort(cluster_labels)
+    sorted_matrix = similarity_matrix[idx][:, idx]
+    sorted_labels = [labels[i] for i in idx]
 
-    node_labels = {i: label for i, label in enumerate(labels)}
+    # Custom colormap: white to blue
+    cmap = LinearSegmentedColormap.from_list("white_to_blue", ["#ffffff", "#1f77b4"])
 
+    # Plot heatmap
+    sns.heatmap(sorted_matrix, xticklabels=sorted_labels, yticklabels=sorted_labels,
+                cmap=cmap, vmin=0, vmax=1, ax=ax1, cbar_kws={'label': 'Similarity'})
+    ax1.set_title(f'Similarity Matrix (Sorted by {best_n_clusters} Clusters)')
 
-    edge_alpha = {(i, j): max(0.1, float(g.edges[i, j]['weight'] - edge_weights[-1][2])*0.8) for i, j in g.edges()}
-    edge_width = {(i, j): v * 3.0 for (i, j), v in edge_alpha.items()}
+    # Draw cluster boundaries
+    cluster_sizes = np.bincount(cluster_labels[idx])
+    boundaries = np.cumsum(cluster_sizes)[:-1]
 
-    Graph(g,
-          node_color=node_color, node_edge_width=0,
-          node_labels=node_labels,
-          node_label_fontdict={'size': 8, 'weight': 'bold'},
-          node_layout='community', node_layout_kwargs=dict(node_to_community=node_to_community),
-          edge_layout='bundled', edge_layout_kwargs=dict(k=2000),
-          edge_width=edge_width,
-          edge_alpha=edge_alpha,
-    )
+    for boundary in boundaries:
+        ax1.axhline(y=boundary, color='red', linestyle='-', linewidth=1)
+        ax1.axvline(x=boundary, color='red', linestyle='-', linewidth=1)
 
-    # plt.show()
+    # 2. Network graph visualization
+    # Choose layout based on parameter
+    if layout_method == "spring":
+        pos = nx.spring_layout(G, seed=42)
 
+    elif layout_method == "community":
+        # Create a modified graph with adjusted edge weights for layout calculation
+        G_layout = G.copy()
 
-    # Save if output file is specified
-    if output_graph:
-        plt.savefig(output_graph, dpi=400, bbox_inches='tight')
-        print(f"Saved graph visualization to {output_graph}")
+        # Modify edge weights based on cluster membership
+        for u, v in G_layout.edges():
+            # Check if nodes belong to the same cluster
+            if G_layout.nodes[u]['cluster'] == G_layout.nodes[v]['cluster']:
+                # Reduce distance (increase attraction) for nodes in same cluster
+                # Original weight is between 0-1, use a scaling factor to emphasize cluster relationships
+                G_layout[u][v]['weight'] = G_layout[u][v]['weight'] * 4.0  # Amplify intra-cluster edge weights
 
-        plt.close()
+        # Use spring layout with the modified weights
+        # In spring layout, higher weights mean stronger springs (shorter distances)
+        pos = nx.spring_layout(
+            G_layout,
+            weight='weight',  # Use the modified edge weights
+            k=0.15,  # Optimal distance between nodes (smaller value creates tighter clusters)
+            iterations=100,  # More iterations for better convergence
+            seed=42  # For reproducibility
+        )
+
+    elif layout_method == "circular_grouped":
+        # Circular layout grouped by clusters
+        pos = {}
+        # Group nodes by cluster
+        clusters = {}
+        for node in G.nodes():
+            cluster = G.nodes[node]['cluster']
+            if cluster not in clusters:
+                clusters[cluster] = []
+            clusters[cluster].append(node)
+
+        # Position each cluster in a circular layout
+        num_clusters = len(clusters)
+        for i, (cluster, nodes) in enumerate(clusters.items()):
+            # Calculate the angular position of this cluster
+            angle = 2 * np.pi * i / num_clusters
+            # Radius of the circle of clusters
+            radius = 5
+            # Center position of the cluster
+            cluster_center = (radius * np.cos(angle), radius * np.sin(angle))
+
+            # Position nodes within the cluster in a smaller circle
+            for j, node in enumerate(nodes):
+                node_angle = 2 * np.pi * j / len(nodes)
+                node_radius = 1  # Radius of the circle of nodes within a cluster
+                node_pos = (
+                    cluster_center[0] + node_radius * np.cos(node_angle),
+                    cluster_center[1] + node_radius * np.sin(node_angle)
+                )
+                pos[node] = node_pos
+
+    elif layout_method == "mds":
+        # Multidimensional scaling layout based on distances
+        mds = MDS(n_components=2, dissimilarity='precomputed', random_state=42)
+        # Use the distance matrix for MDS
+        positions = mds.fit_transform(distance_matrix)
+        pos = {i: (positions[i, 0], positions[i, 1]) for i in range(len(labels))}
+
+    elif layout_method == "tsne":
+        # t-SNE embedding
+        tsne = TSNE(n_components=2, metric='precomputed', random_state=42)
+        # Use the distance matrix for t-SNE
+        positions = tsne.fit_transform(distance_matrix)
+        pos = {i: (positions[i, 0], positions[i, 1]) for i in range(len(labels))}
+
     else:
-        plt.show()
+        # Default to spring layout
+        pos = nx.spring_layout(G, seed=42)
 
+    # Create a list of colors for the clusters
+    cluster_colors = plt.cm.tab10(np.linspace(0, 1, best_n_clusters))
+    node_colors = [cluster_colors[cluster_labels[node]] for node in G.nodes()]
+
+    # Draw the graph
+    nx.draw_networkx_nodes(G, pos, node_color=node_colors, ax=ax2, node_size=300, alpha=0.8)
+
+    # Draw edges with width based on weight
+    edge_weights = [G[u][v]['weight'] * 3 for u, v in G.edges()]
+    nx.draw_networkx_edges(G, pos, width=edge_weights, alpha=0.5, ax=ax2)
+
+    # Draw labels with smaller font
+    nx.draw_networkx_labels(G, pos, labels={i: label for i, label in enumerate(labels)},
+                            font_size=8, ax=ax2)
+
+    # Add a legend for clusters
+    legend_elements = [plt.Line2D([0], [0], marker='o', color='w',
+                       markerfacecolor=cluster_colors[i], markersize=10,
+                       label=f'Cluster {i+1}')
+                       for i in range(best_n_clusters)]
+    ax2.legend(handles=legend_elements, loc='upper right')
+
+    ax2.set_title(f'Network Graph ({layout_method.replace("_", " ").title()} Layout)\n'
+                 f'Optimal Clusters: {best_n_clusters}, Silhouette Score: {best_score:.3f}')
+    ax2.axis('off')
+
+    # Adjust layout and save figure
+    plt.tight_layout()
+    plt.savefig(output_graph, dpi=300, bbox_inches='tight')
+    plt.close()
+
+    # Print analysis info
+    print(f"Optimal number of clusters: {best_n_clusters}")
+    print(f"Silhouette score: {best_score:.3f}")
+    print(f"Layout method: {layout_method}")
+
+    # Return analysis results
+    return {
+        'n_clusters': best_n_clusters,
+        'silhouette_score': best_score,
+        'cluster_assignments': {labels[i]: cluster_labels[i] for i in range(len(labels))},
+        'cluster_sizes': {i: np.sum(cluster_labels == i) for i in range(best_n_clusters)}
+    }
 
 def main():
     parser = argparse.ArgumentParser(description='Clone GitHub repos, find search files, analyze similarity and visualize clusters.')
