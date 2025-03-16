@@ -38,6 +38,7 @@ import networkx as nx
 from matplotlib.colors import LinearSegmentedColormap
 from sklearn.manifold import MDS, TSNE
 from matplotlib.collections import LineCollection
+from tqdm import tqdm
 
 def parse_github_url(url: str) -> str:
     """Extract the repository name from a GitHub URL."""
@@ -152,10 +153,20 @@ def find_search_files(repo_dir: str, repo_name: str) -> List[str]:
 
     return preferred_files
 
-def load_model() -> SentenceTransformer:
-    """Load the all-MiniLM-L6-v2 model."""
-    print("Loading all-MiniLM-L6-v2 model...")
-    return SentenceTransformer('all-MiniLM-L6-v2')
+def load_model() -> List[SentenceTransformer]:
+    model_names = [
+        "sentence-transformers/sentence-t5-xl",
+        "sentence-transformers/all-distilroberta-v1",
+        "sentence-transformers/all-MiniLM-L12-v2",
+        # # "sentence-transformers/all-MiniLM-L6-v2",
+        "sentence-transformers/all-mpnet-base-v2",
+        "Kwaipilot/OASIS-code-embedding-1.5B",
+        "Salesforce/SFR-Embedding-Code-2B_R",
+        "flax-sentence-embeddings/st-codesearch-distilroberta-base",
+        "nomic-ai/CodeRankEmbed",
+    ]
+    print(f"Loading models:", model_names)
+    return [SentenceTransformer(model_name, trust_remote_code=True, model_kwargs={"torch_dtype": "float16"}) for model_name in model_names]
 
 def read_code_file(file_path: str) -> str:
     """Read a code file and return its contents as a string."""
@@ -165,7 +176,7 @@ def read_code_file(file_path: str) -> str:
     with open(file_path, 'r', encoding='utf-8', errors='replace') as file:
         return file.read()
 
-def get_embeddings(code: str, model: SentenceTransformer, chunk_size: int = 1000, overlap: int = 200) -> np.ndarray:
+def get_embeddings_OLD(code: str, model: SentenceTransformer, chunk_size: int = 1000, overlap: int = 200) -> np.ndarray:
     """Get embeddings for a piece of code."""
     # Split code into chunks if it's large
     def chunk_code(text):
@@ -192,6 +203,68 @@ def get_embeddings(code: str, model: SentenceTransformer, chunk_size: int = 1000
     else:
         return chunk_embeddings.reshape(1, -1)
 
+
+def get_embeddings(
+    code: str,
+    models: List[SentenceTransformer],
+    chunk_size: int = 1000,
+    overlap: int = 200,
+) -> np.ndarray:
+    """
+    Get embeddings for a piece of code using an ensemble of models that may have different dimensions.
+
+    Args:
+        code (str): The code to be embedded
+        models (List[SentenceTransformer]): List of sentence transformer models
+        chunk_size (int): Size of each code chunk
+        overlap (int): Overlap between consecutive chunks
+        combination_method (str): Method to combine embeddings from different models.
+            Options: "concat" (concatenation), "individual" (return dict of embeddings)
+        model_weights (Optional[Dict[int, float]]): Weights for each model (by index) if using weighted methods
+
+    Returns:
+        Union[np.ndarray, Dict[int, np.ndarray]]: The final embedding vector or dictionary of embeddings
+    """
+    # Split code into chunks if it's large
+    def chunk_code(text):
+        if len(text) <= chunk_size:
+            return [text]
+
+        chunks = []
+        start = 0
+        while start < len(text):
+            end = min(start + chunk_size, len(text))
+            chunks.append(text[start:end])
+            start += chunk_size - overlap
+
+        return chunks
+
+    code_chunks = chunk_code(code)
+
+    # Initialize dictionary to store embeddings from all models
+    model_embeddings = {}
+
+    # Process each model
+    for i, model in enumerate(models):
+        # Get embeddings for each chunk using the current model
+        chunk_embeddings = model.encode(code_chunks)
+
+        # Average the embeddings if there are multiple chunks
+        if len(chunk_embeddings) > 1:
+            model_embedding = np.mean(chunk_embeddings, axis=0)
+        else:
+            model_embedding = chunk_embeddings[0]
+
+        model_embeddings[i] = model_embedding
+
+    # Flatten dictionary to list in order of indices
+    embedding_list = [model_embeddings[i] for i in range(len(models))]
+    # Concatenate all embeddings
+    combined_embedding = np.concatenate(embedding_list)
+    # Return as row vector
+    return combined_embedding.reshape(1, -1)
+
+
 def reorder_by_similarity(similarity_matrix: np.ndarray) -> np.ndarray:
     """Reorder the matrix so similar files are close to each other."""
     from scipy.cluster import hierarchy
@@ -201,6 +274,8 @@ def reorder_by_similarity(similarity_matrix: np.ndarray) -> np.ndarray:
 
     # Perform hierarchical clustering
     linkage = hierarchy.linkage(distance_matrix[np.triu_indices(distance_matrix.shape[0], k=1)], method='average')
+
+    print("linkage:", linkage)
 
     # Get the leaf ordering
     ordering = hierarchy.leaves_list(linkage)
@@ -779,7 +854,7 @@ def analyze_and_visualize_similarity_matrix(
     distance_matrix = 1 - similarity_matrix
 
     # Find optimal number of clusters using silhouette score
-    best_n_clusters = 7  # Default starting point
+    best_n_clusters = 6  # Default starting point
     best_score = -1
 
     # Try different cluster counts from 2 to min(10, n-1)
@@ -868,7 +943,7 @@ def analyze_and_visualize_similarity_matrix(
         if G_layout.nodes[u]['cluster'] == G_layout.nodes[v]['cluster']:
             # Reduce distance (increase attraction) for nodes in same cluster
             # Original weight is between 0-1, use a scaling factor to emphasize cluster relationships
-            G_layout[u][v]['weight'] = G_layout[u][v]['weight'] * 3.0  # Amplify intra-cluster edge weights
+            G_layout[u][v]['weight'] = G_layout[u][v]['weight'] * 3.5  # Amplify intra-cluster edge weights
 
     # Use spring layout with the modified weights
     # In spring layout, higher weights mean stronger springs (shorter distances)
@@ -898,16 +973,16 @@ def analyze_and_visualize_similarity_matrix(
 
     # Create a list of colors for the clusters
     cluster_colors = [
-        (0.8392156862745098,  0.15294117647058825, 0.1568627450980392  ),  # d62728
-        (1.0,                 0.4980392156862745,  0.054901960784313725),  # ff7f0e
-        (0.17254901960784313, 0.6274509803921569,  0.17254901960784313 ),  # 2ca02c
-        (0.12156862745098039, 0.4666666666666667,  0.7058823529411765  ),  # 1f77b4
-        (0.5803921568627451,  0.403921568627451,   0.7411764705882353  ),  # 9467bd
-        (0.09019607843137255, 0.7450980392156863,  0.8117647058823529),    # 17becf
-        (0.8901960784313725,  0.4666666666666667,  0.7607843137254902  ),  # e377c2
-        (0.4980392156862745,  0.4980392156862745,  0.4980392156862745  ),  # 7f7f7f
-        (0.7372549019607844,  0.7411764705882353,  0.13333333333333333 ),  # bcbd22
-        (0.5490196078431373,  0.33725490196078434, 0.29411764705882354 ),  # 8c564b
+        (0.8392156862745098,  0.15294117647058825, 0.1568627450980392  ),  # d62728 red
+        (1.0,                 0.4980392156862745,  0.054901960784313725),  # ff7f0e orange
+        (0.17254901960784313, 0.6274509803921569,  0.17254901960784313 ),  # 2ca02c green
+        (0.12156862745098039, 0.4666666666666667,  0.7058823529411765  ),  # 1f77b4 blue
+        (0.5803921568627451,  0.403921568627451,   0.7411764705882353  ),  # 9467bd purple
+        (0.09019607843137255, 0.7450980392156863,  0.8117647058823529),    # 17becf türkis
+        (0.8901960784313725,  0.4666666666666667,  0.7607843137254902  ),  # e377c2 pink
+        (0.4980392156862745,  0.4980392156862745,  0.4980392156862745  ),  # 7f7f7f grey
+        (0.7372549019607844,  0.7411764705882353,  0.13333333333333333 ),  # bcbd22 yellow
+        (0.5490196078431373,  0.33725490196078434, 0.29411764705882354 ),  # 8c564b brown
 
     ]
     #plt.cm.Dark2(np.linspace(0, 1, best_n_clusters))
@@ -1129,7 +1204,7 @@ def main():
         embeddings = []
         valid_file_infos = []
 
-        for file_info in all_file_infos:
+        for file_info in tqdm(all_file_infos):
             try:
                 code = read_code_file(file_info['abs_path'])
                 embedding = get_embeddings(code, model, chunk_size=args.chunk_size)

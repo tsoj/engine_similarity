@@ -4,7 +4,6 @@ set -e
 
 python main6.py --repos \
 https://github.com/tsoj/Nalwald \
-https://github.com/tsoj/Moonbird \
 https://github.com/jhonnold/berserk \
 https://github.com/Aryan1508/Bit-Genie \
 https://github.com/jnlt3/blackmarlin \
