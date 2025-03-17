@@ -914,6 +914,7 @@ def analyze_and_visualize_similarity_matrix(
                 best_score = score
                 cluster_labels = clustering.labels_
 
+    print("Selected best_score:", best_score)
     assert cluster_labels is not None
 
     # Create NetworkX graph for visualization
