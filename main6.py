@@ -906,7 +906,9 @@ def analyze_and_visualize_similarity_matrix(
 
 
         if len(set(clustering.labels_)) > 1:  # Ensure we have at least 2 clusters
-            score = silhouette_score(similarity_matrix, clustering.labels_, metric='precomputed')
+            distance_matrix = 1.0 - similarity_matrix
+            np.fill_diagonal(distance_matrix, 0)
+            score = silhouette_score(distance_matrix, clustering.labels_, metric='precomputed')
             print(f"Random number: {random_state}, score: {score}")
             if score > best_score:
                 best_score = score
