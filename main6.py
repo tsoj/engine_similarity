@@ -866,7 +866,7 @@ def analyze_and_visualize_similarity_matrix(
     # distance_matrix = 1 - similarity_matrix
 
     # Find optimal number of clusters using silhouette score
-    n_clusters = 4  # Default starting point
+    n_clusters = 5  # Default starting point
     # random_state = -1
 
     # Try different cluster counts from 2 to min(10, n-1)
@@ -990,7 +990,7 @@ def analyze_and_visualize_similarity_matrix(
         if G_layout.nodes[u]['cluster'] == G_layout.nodes[v]['cluster']:
             # Reduce distance (increase attraction) for nodes in same cluster
             # Original weight is between 0-1, use a scaling factor to emphasize cluster relationships
-            G_layout[u][v]['weight'] = G_layout[u][v]['weight'] * 2.3  # Amplify intra-cluster edge weights
+            G_layout[u][v]['weight'] = G_layout[u][v]['weight'] * 3.0  # Amplify intra-cluster edge weights
 
     # Use spring layout with the modified weights
     # In spring layout, higher weights mean stronger springs (shorter distances)
@@ -1024,10 +1024,10 @@ def analyze_and_visualize_similarity_matrix(
         (0.17254901960784313, 0.6274509803921569,  0.17254901960784313 ),  # 2ca02c green
         (0.5803921568627451,  0.403921568627451,   0.7411764705882353  ),  # 9467bd purple
         (0.238, 0.544,  0.789  ),  # 3d8bc9 light blue
+        (1.0,                 0.4980392156862745,  0.054901960784313725),  # ff7f0e orange
         (0.7372549019607844,  0.7411764705882353,  0.13333333333333333 ),  # bcbd22 yellow
         (0.4980392156862745,  0.4980392156862745,  0.4980392156862745  ),  # 7f7f7f grey
         (0.09019607843137255, 0.7450980392156863,  0.8117647058823529),    # 17becf türkis
-        (1.0,                 0.4980392156862745,  0.054901960784313725),  # ff7f0e orange
         (0.12156862745098039, 0.4666666666666667,  0.7058823529411765  ),  # 1f77b4 blue
         (0.8901960784313725,  0.4666666666666667,  0.7607843137254902  ),  # e377c2 pink
         (0.5490196078431373,  0.33725490196078434, 0.29411764705882354 ),  # 8c564b brown
