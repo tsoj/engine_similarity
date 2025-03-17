@@ -954,8 +954,8 @@ def analyze_and_visualize_similarity_matrix(
     # Unpack the collected results
     rs_list, labels_list, sil_scores, cal_scores, dav_scores = zip(*results)
     # sil_scores = np.array(sil_scores)
-    cal_scores = np.array(cal_scores)
-    # dav_scores = np.array(dav_scores)
+    # cal_scores = np.array(cal_scores)
+    dav_scores = np.array(dav_scores)
 
     # # Normalize the individual scores. Note: we invert davies because lower is better.
     # norm_sil = normalize_array(sil_scores)
@@ -964,7 +964,7 @@ def analyze_and_visualize_similarity_matrix(
 
     # Compute the mean normalized score for each valid clustering
     # mean_norm = (norm_sil + norm_cal - norm_dav) / 3.0
-    best_idx = np.argmax(cal_scores)
+    best_idx = np.argmax(-norm_dav)
 
     cluster_labels = labels_list[best_idx]
     print("Selected best random state:", rs_list[best_idx])
