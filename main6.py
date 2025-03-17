@@ -43,6 +43,12 @@ from scipy.cluster.hierarchy import dendrogram
 from sklearn.metrics import calinski_harabasz_score
 from sklearn.metrics import davies_bouldin_score
 
+def normalize_array(values, invert=False):
+    """Normalize a numpy array to [0, 1]. Invert if lower values are better."""
+    mn, mx = values.min(), values.max()
+    if mx == mn:
+        return np.ones_like(values, dtype=float)
+    return (values - mn) / (mx - mn)
 
 def parse_github_url(url: str) -> str:
     """Extract the repository name from a GitHub URL."""
@@ -896,30 +902,74 @@ def analyze_and_visualize_similarity_matrix(
     #     linkage='average'
     # ).fit(distance_matrix)
     #
-    cluster_labels = None
-    best_score = -1
-    for random_state in range(0, 100):
+    # cluster_labels = None
+    # best_score = -1
+    # for random_state in range(0, 100):
+    #     clustering = SpectralClustering(
+    #             n_clusters=n_clusters,
+    #             affinity='precomputed',
+    #             random_state=random_state,
+    #             assign_labels='kmeans'
+    #         ).fit(similarity_matrix)
+
+
+    #     if len(set(clustering.labels_)) > 1:  # Ensure we have at least 2 clusters
+    #         distance_matrix = 1.0 - similarity_matrix
+    #         np.fill_diagonal(distance_matrix, 0)
+    #         score = 0.0
+    #         score += silhouette_score(distance_matrix, clustering.labels_, metric='precomputed')
+    #         score += calinski_harabasz_score(distance_matrix, clustering.labels_)
+    #         score += davies_bouldin_score(distance_matrix, clustering.labels_)
+    #         print(f"Random number: {random_state}, score: {score}")
+    #         if score > best_score:
+    #             best_score = score
+    #             cluster_labels = clustering.labels_
+
+    # print("Selected best_score:", best_score)
+    # assert cluster_labels is not None
+    #
+    # Collect valid clustering results: we store tuple (random_state, labels, silhouette, calinski, davies)
+    results = []
+    for rs in range(100):
         clustering = SpectralClustering(
-                n_clusters=n_clusters,
-                affinity='precomputed',
-                random_state=random_state,
-                assign_labels='kmeans'
-            ).fit(similarity_matrix)
+            n_clusters=n_clusters,
+            affinity='precomputed',
+            random_state=rs,
+            assign_labels='kmeans'
+        ).fit(similarity_matrix)
 
+        if len(np.unique(clustering.labels_)) > 1:
+            # Compute distance matrix from similarity matrix
+            dist = 1.0 - similarity_matrix
+            np.fill_diagonal(dist, 0)
+            sil = silhouette_score(dist, clustering.labels_, metric='precomputed')
+            cal = calinski_harabasz_score(dist, clustering.labels_)
+            dav = davies_bouldin_score(dist, clustering.labels_)  # lower is better
+            results.append((rs, clustering.labels_, sil, cal, dav))
+            print(f"Random state: {rs}, silhouette: {sil:.4f}, calinski: {cal:.4f}, davies: {dav:.4f}")
 
-        if len(set(clustering.labels_)) > 1:  # Ensure we have at least 2 clusters
-            distance_matrix = 1.0 - similarity_matrix
-            np.fill_diagonal(distance_matrix, 0)
-            score = 0.0
-            score += silhouette_score(distance_matrix, clustering.labels_, metric='precomputed')
-            score += calinski_harabasz_score(distance_matrix, clustering.labels_)
-            score += davies_bouldin_score(distance_matrix, clustering.labels_)
-            print(f"Random number: {random_state}, score: {score}")
-            if score > best_score:
-                best_score = score
-                cluster_labels = clustering.labels_
+    if not results:
+        raise ValueError("No valid clustering found.")
 
-    print("Selected best_score:", best_score)
+    # Unpack the collected results
+    rs_list, labels_list, sil_scores, cal_scores, dav_scores = zip(*results)
+    sil_scores = np.array(sil_scores)
+    cal_scores = np.array(cal_scores)
+    dav_scores = np.array(dav_scores)
+
+    # Normalize the individual scores. Note: we invert davies because lower is better.
+    norm_sil = normalize_array(sil_scores)
+    norm_cal = normalize_array(cal_scores)
+    norm_dav = normalize_array(dav_scores)
+
+    # Compute the mean normalized score for each valid clustering
+    mean_norm = (norm_sil + norm_cal - norm_dav) / 3.0
+    best_idx = np.argmax(mean_norm)
+
+    cluster_labels = labels_list[best_idx]
+    print("Selected best random state:", rs_list[best_idx])
+    print("Best mean normalized score:", mean_norm[best_idx])
+
     assert cluster_labels is not None
 
     # Create NetworkX graph for visualization
