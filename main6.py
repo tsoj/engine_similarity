@@ -866,7 +866,7 @@ def analyze_and_visualize_similarity_matrix(
     # distance_matrix = 1 - similarity_matrix
 
     # Find optimal number of clusters using silhouette score
-    n_clusters = 5  # Default starting point
+    n_clusters = 4  # Default starting point
     # random_state = -1
 
     # Try different cluster counts from 2 to min(10, n-1)
@@ -1052,7 +1052,7 @@ def analyze_and_visualize_similarity_matrix(
 
     # Draw labels with smaller font
     nx.draw_networkx_labels(G, pos, labels={i: label for i, label in enumerate(labels)},
-                            font_size=30, ax=ax2)
+                            font_size=26, ax=ax2)
 
     # Add a legend for clusters
     # legend_elements = [plt.Line2D([0], [0], marker='o', color='w',
