@@ -968,7 +968,7 @@ def analyze_and_visualize_similarity_matrix(
     ax1.tick_params(axis='x', rotation=45, labelsize=12)
     ax1.tick_params(axis='y', rotation=0, labelsize=12)
 
-    ax1.set_title("Code Similarity Matrix (Sorted)", 16)
+    ax1.set_title("Code Similarity Matrix (Sorted)", fontsize=16)
 
     # Draw cluster boundaries
     cluster_sizes = np.bincount(cluster_labels[idx])
