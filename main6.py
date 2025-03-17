@@ -40,6 +40,7 @@ from matplotlib.collections import LineCollection
 from tqdm import tqdm
 from scipy.cluster import hierarchy
 from scipy.cluster.hierarchy import dendrogram
+from sklearn.metrics import calinski_harabasz_score
 
 
 def parse_github_url(url: str) -> str:
@@ -908,7 +909,8 @@ def analyze_and_visualize_similarity_matrix(
         if len(set(clustering.labels_)) > 1:  # Ensure we have at least 2 clusters
             distance_matrix = 1.0 - similarity_matrix
             np.fill_diagonal(distance_matrix, 0)
-            score = silhouette_score(distance_matrix, clustering.labels_, metric='precomputed')
+            # score = silhouette_score(distance_matrix, clustering.labels_, metric='precomputed')
+            score = calinski_harabasz_score(distance_matrix, clustering.labels_)
             print(f"Random number: {random_state}, score: {score}")
             if score > best_score:
                 best_score = score
