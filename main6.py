@@ -866,7 +866,7 @@ def analyze_and_visualize_similarity_matrix(
     # distance_matrix = 1 - similarity_matrix
 
     # Find optimal number of clusters using silhouette score
-    n_clusters = 4  # Default starting point
+    n_clusters = 5  # Default starting point
     # random_state = -1
 
     # Try different cluster counts from 2 to min(10, n-1)
@@ -965,7 +965,7 @@ def analyze_and_visualize_similarity_matrix(
     # ax1.xticks(rotation=45, ha='right', fontsize=max(8, 12 - 0.1*n))
     # ax1.yticks(rotation=0, fontsize=max(8, 12 - 0.1*n))
     # Set the x and y tick parameters for ax1
-    ax1.tick_params(axis='x', rotation=45, labelsize=12)
+    ax1.tick_params(axis='x', rotation=45, ha="right", labelsize=12)
     ax1.tick_params(axis='y', rotation=0, labelsize=12)
 
     ax1.set_title("Code Similarity Matrix (Sorted)", fontsize=16)
@@ -987,7 +987,7 @@ def analyze_and_visualize_similarity_matrix(
         if G_layout.nodes[u]['cluster'] == G_layout.nodes[v]['cluster']:
             # Reduce distance (increase attraction) for nodes in same cluster
             # Original weight is between 0-1, use a scaling factor to emphasize cluster relationships
-            G_layout[u][v]['weight'] = G_layout[u][v]['weight'] * 2.0  # Amplify intra-cluster edge weights
+            G_layout[u][v]['weight'] = G_layout[u][v]['weight'] * 2.3  # Amplify intra-cluster edge weights
 
     # Use spring layout with the modified weights
     # In spring layout, higher weights mean stronger springs (shorter distances)
