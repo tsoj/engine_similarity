@@ -938,7 +938,7 @@ def analyze_and_visualize_similarity_matrix(
     n = similarity_matrix.shape[0]
 
     # Create figure with two subplots
-    figsize = (2*max(12, n * 0.4), max(10, n * 0.3))
+    figsize = (60, 30)
     fig, (ax1, ax2) = plt.subplots(1, 2, figsize=figsize)
 
     # 1. Heatmap visualization with hierarchical clustering
@@ -958,25 +958,25 @@ def analyze_and_visualize_similarity_matrix(
 
 
     # Create the heatmap with increased font size for better readability
-    sns.heatmap(sorted_matrix, ax=ax1, annot=True, fmt=".2f", cmap="Blues",
-                    xticklabels=labels, yticklabels=labels, annot_kws={"size": max(8, 12 - 0.1*len(sorted_labels))})
+    sns.heatmap(sorted_matrix*100.0, ax=ax1, annot=True, fmt=".0f", cmap="Blues",
+                    xticklabels=labels, yticklabels=labels, annot_kws={"size": 6})
 
     # # Rotate x-axis labels for better readability
     # ax1.xticks(rotation=45, ha='right', fontsize=max(8, 12 - 0.1*n))
     # ax1.yticks(rotation=0, fontsize=max(8, 12 - 0.1*n))
     # Set the x and y tick parameters for ax1
-    ax1.tick_params(axis='x', rotation=45, labelsize=max(8, 12 - 0.1 * n))
-    ax1.tick_params(axis='y', rotation=0, labelsize=max(8, 12 - 0.1 * n))
+    ax1.tick_params(axis='x', rotation=45, labelsize=12)
+    ax1.tick_params(axis='y', rotation=0, labelsize=12)
 
-    ax1.set_title("Code Similarity Matrix (Sorted)", fontsize=max(12, 14 - 0.05*n))
+    ax1.set_title("Code Similarity Matrix (Sorted)", 16)
 
     # Draw cluster boundaries
     cluster_sizes = np.bincount(cluster_labels[idx])
     boundaries = np.cumsum(cluster_sizes)[:-1]
 
     for boundary in boundaries:
-        ax1.axhline(y=boundary, color='red', linestyle='-', linewidth=1)
-        ax1.axvline(x=boundary, color='red', linestyle='-', linewidth=1)
+        ax1.axhline(y=boundary, color='red', linestyle='-', linewidth=4)
+        ax1.axvline(x=boundary, color='red', linestyle='-', linewidth=4)
 
     # 2. Network graph visualization
     G_layout = G.copy()
@@ -1018,14 +1018,14 @@ def analyze_and_visualize_similarity_matrix(
     # Create a list of colors for the clusters
     cluster_colors = [
         (0.8392156862745098,  0.15294117647058825, 0.1568627450980392  ),  # d62728 red
-        (0.4980392156862745,  0.4980392156862745,  0.4980392156862745  ),  # 7f7f7f grey
         (0.17254901960784313, 0.6274509803921569,  0.17254901960784313 ),  # 2ca02c green
         (0.5803921568627451,  0.403921568627451,   0.7411764705882353  ),  # 9467bd purple
+        (0.7372549019607844,  0.7411764705882353,  0.13333333333333333 ),  # bcbd22 yellow
+        (0.4980392156862745,  0.4980392156862745,  0.4980392156862745  ),  # 7f7f7f grey
         (0.09019607843137255, 0.7450980392156863,  0.8117647058823529),    # 17becf türkis
         (1.0,                 0.4980392156862745,  0.054901960784313725),  # ff7f0e orange
         (0.12156862745098039, 0.4666666666666667,  0.7058823529411765  ),  # 1f77b4 blue
         (0.8901960784313725,  0.4666666666666667,  0.7607843137254902  ),  # e377c2 pink
-        (0.7372549019607844,  0.7411764705882353,  0.13333333333333333 ),  # bcbd22 yellow
         (0.5490196078431373,  0.33725490196078434, 0.29411764705882354 ),  # 8c564b brown
 
     ]
@@ -1038,21 +1038,21 @@ def analyze_and_visualize_similarity_matrix(
     # draw each edge with a color gradient:
     for n1, n2 in G_viz.edges():
         alpha = np.power(G_viz[n1][n2]['weight'], 5.2)
-        width = max(0.5, alpha * 4.0)
+        width = max(0.8, alpha * 5.0)
         color1 = node_colors[n1][:3]
         color2 = node_colors[n2][:3]
         draw_gradient_edge(ax2, pos, n1, n2, color2, color1, n_points=200, lw=width, alpha=alpha)
 
     # Draw the graph using the filtered edges but layout from full graph
-    nx.draw_networkx_nodes(G_viz, pos, node_color=node_colors, ax=ax2, node_size=300)
+    nx.draw_networkx_nodes(G_viz, pos, node_color=node_colors, ax=ax2, node_size=1000)
 
     # Draw labels with smaller font
     nx.draw_networkx_labels(G, pos, labels={i: label for i, label in enumerate(labels)},
-                            font_size=10, ax=ax2)
+                            font_size=14, ax=ax2)
 
     # Add a legend for clusters
     legend_elements = [plt.Line2D([0], [0], marker='o', color='w',
-                       markerfacecolor=cluster_colors[i], markersize=10,
+                       markerfacecolor=cluster_colors[i], markersize=14,
                        label=f'Cluster {i+1}')
                        for i in range(n_clusters)]
     ax2.legend(handles=legend_elements, loc='upper right')
