@@ -965,7 +965,10 @@ def analyze_and_visualize_similarity_matrix(
     # ax1.xticks(rotation=45, ha='right', fontsize=max(8, 12 - 0.1*n))
     # ax1.yticks(rotation=0, fontsize=max(8, 12 - 0.1*n))
     # Set the x and y tick parameters for ax1
-    ax1.tick_params(axis='x', rotation=45, ha="right", labelsize=12)
+    # Adjust the alignment of the x-tick labels
+    for label in ax1.get_xticklabels():
+        label.set_horizontalalignment('right')
+    ax1.tick_params(axis='x', rotation=45, labelsize=12)
     ax1.tick_params(axis='y', rotation=0, labelsize=12)
 
     ax1.set_title("Code Similarity Matrix (Sorted)", fontsize=16)
