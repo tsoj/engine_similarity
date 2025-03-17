@@ -960,8 +960,8 @@ def analyze_and_visualize_similarity_matrix(
                     xticklabels=labels, yticklabels=labels, annot_kws={"size": max(8, 12 - 0.1*len(sorted_labels))})
 
     # Rotate x-axis labels for better readability
-    ax1.xticks(rotation=45, ha='right', fontsize=max(8, 12 - 0.1*n))
-    ax1.yticks(rotation=0, fontsize=max(8, 12 - 0.1*n))
+    ax1.set_xticks(rotation=45, ha='right', fontsize=max(8, 12 - 0.1*n))
+    ax1.set_yticks(rotation=0, fontsize=max(8, 12 - 0.1*n))
 
     ax1.title("Code Similarity Matrix (Sorted)", fontsize=max(12, 14 - 0.05*n))
 
