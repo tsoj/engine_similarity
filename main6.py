@@ -964,11 +964,11 @@ def analyze_and_visualize_similarity_matrix(
 
     # Compute the mean normalized score for each valid clustering
     # mean_norm = (norm_sil + norm_cal - norm_dav) / 3.0
-    best_idx = np.argmax(-norm_dav)
+    best_idx = np.argmax(-dav_scores)
 
     cluster_labels = labels_list[best_idx]
     print("Selected best random state:", rs_list[best_idx])
-    print("Best mean normalized score:", cal_scores[best_idx])
+    print("Best mean normalized score:", dav_scores[best_idx])
 
     assert cluster_labels is not None
 
