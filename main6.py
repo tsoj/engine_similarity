@@ -950,19 +950,19 @@ def analyze_and_visualize_similarity_matrix(
     # # Plot heatmap
     # sns.set(font_scale=0.5)
     # sns.heatmap(sorted_matrix, xticklabels=sorted_labels, yticklabels=sorted_labels,
-    #             cmap=cmap, vmin=0, vmax=1, ax=ax1, cbar_kws={'label': 'Similarity'})
+    #             cmap=cmap, vmin=0, vmax=1, , cbar_kws={'label': 'Similarity'})
     # ax1.set_title(f'Similarity Matrix (Sorted by {n_clusters} Clusters)')
 
 
     # Create the heatmap with increased font size for better readability
-    ax = sns.heatmap(sorted_matrix, annot=True, fmt=".2f", cmap="Blues",
+    sns.heatmap(sorted_matrix, ax=ax1, annot=True, fmt=".2f", cmap="Blues",
                     xticklabels=labels, yticklabels=labels, annot_kws={"size": max(8, 12 - 0.1*len(sorted_labels))})
 
     # Rotate x-axis labels for better readability
-    plt.xticks(rotation=45, ha='right', fontsize=max(8, 12 - 0.1*n))
-    plt.yticks(rotation=0, fontsize=max(8, 12 - 0.1*n))
+    ax1.xticks(rotation=45, ha='right', fontsize=max(8, 12 - 0.1*n))
+    ax1.yticks(rotation=0, fontsize=max(8, 12 - 0.1*n))
 
-    plt.title("Code Similarity Matrix (Sorted)", fontsize=max(12, 14 - 0.05*n))
+    ax1.title("Code Similarity Matrix (Sorted)", fontsize=max(12, 14 - 0.05*n))
 
     # Draw cluster boundaries
     cluster_sizes = np.bincount(cluster_labels[idx])
