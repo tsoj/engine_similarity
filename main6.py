@@ -1038,8 +1038,8 @@ def analyze_and_visualize_similarity_matrix(
     # Instead of drawing edges with draw_networkx_edges,
     # draw each edge with a color gradient:
     for n1, n2 in G_viz.edges():
-        alpha = np.power(G_viz[n1][n2]['weight'], 5.5)
-        width = max(0.8, alpha * 6.0)
+        alpha = np.power(G_viz[n1][n2]['weight'], 5.3)
+        width = max(0.8, alpha * 8.0)
         color1 = node_colors[n1][:3]
         color2 = node_colors[n2][:3]
         draw_gradient_edge(ax2, pos, n1, n2, color2, color1, n_points=200, lw=width, alpha=alpha)
@@ -1052,11 +1052,11 @@ def analyze_and_visualize_similarity_matrix(
                             font_size=30, ax=ax2)
 
     # Add a legend for clusters
-    legend_elements = [plt.Line2D([0], [0], marker='o', color='w',
-                       markerfacecolor=cluster_colors[i], markersize=14,
-                       label=f'Cluster {i+1}')
-                       for i in range(n_clusters)]
-    ax2.legend(handles=legend_elements, loc='upper right')
+    # legend_elements = [plt.Line2D([0], [0], marker='o', color='w',
+    #                    markerfacecolor=cluster_colors[i], markersize=14,
+    #                    label=f'Cluster {i+1}')
+    #                    for i in range(n_clusters)]
+    # ax2.legend(handles=legend_elements, loc='upper right')
 
     ax2.axis('off')
 
