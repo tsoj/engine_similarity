@@ -914,7 +914,7 @@ def analyze_and_visualize_similarity_matrix(
                 best_score = score
                 cluster_labels = clustering.labels_
 
-    assert cluster_labels
+    assert cluster_labels is not None
 
     # Create NetworkX graph for visualization
     G = nx.Graph()
