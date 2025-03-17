@@ -938,7 +938,7 @@ def analyze_and_visualize_similarity_matrix(
     n = similarity_matrix.shape[0]
 
     # Create figure with two subplots
-    figsize = (50, 20)
+    figsize = (45, 20)
     fig, (ax1, ax2) = plt.subplots(1, 2, figsize=figsize)
 
     # 1. Heatmap visualization with hierarchical clustering
@@ -987,7 +987,7 @@ def analyze_and_visualize_similarity_matrix(
         if G_layout.nodes[u]['cluster'] == G_layout.nodes[v]['cluster']:
             # Reduce distance (increase attraction) for nodes in same cluster
             # Original weight is between 0-1, use a scaling factor to emphasize cluster relationships
-            G_layout[u][v]['weight'] = G_layout[u][v]['weight'] * 2.5  # Amplify intra-cluster edge weights
+            G_layout[u][v]['weight'] = G_layout[u][v]['weight'] * 2.0  # Amplify intra-cluster edge weights
 
     # Use spring layout with the modified weights
     # In spring layout, higher weights mean stronger springs (shorter distances)
@@ -1038,18 +1038,18 @@ def analyze_and_visualize_similarity_matrix(
     # Instead of drawing edges with draw_networkx_edges,
     # draw each edge with a color gradient:
     for n1, n2 in G_viz.edges():
-        alpha = np.power(G_viz[n1][n2]['weight'], 5.2)
-        width = max(0.8, alpha * 5.0)
+        alpha = np.power(G_viz[n1][n2]['weight'], 5.5)
+        width = max(0.8, alpha * 6.0)
         color1 = node_colors[n1][:3]
         color2 = node_colors[n2][:3]
         draw_gradient_edge(ax2, pos, n1, n2, color2, color1, n_points=200, lw=width, alpha=alpha)
 
     # Draw the graph using the filtered edges but layout from full graph
-    nx.draw_networkx_nodes(G_viz, pos, node_color=node_colors, ax=ax2, node_size=1000)
+    nx.draw_networkx_nodes(G_viz, pos, node_color=node_colors, ax=ax2, node_size=2000)
 
     # Draw labels with smaller font
     nx.draw_networkx_labels(G, pos, labels={i: label for i, label in enumerate(labels)},
-                            font_size=14, ax=ax2)
+                            font_size=30, ax=ax2)
 
     # Add a legend for clusters
     legend_elements = [plt.Line2D([0], [0], marker='o', color='w',
