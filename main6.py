@@ -930,7 +930,7 @@ def analyze_and_visualize_similarity_matrix(
     #
     # Collect valid clustering results: we store tuple (random_state, labels, silhouette, calinski, davies)
     results = []
-    for rs in range(100):
+    for rs in range(1000):
         clustering = SpectralClustering(
             n_clusters=n_clusters,
             affinity='precomputed',
@@ -953,22 +953,22 @@ def analyze_and_visualize_similarity_matrix(
 
     # Unpack the collected results
     rs_list, labels_list, sil_scores, cal_scores, dav_scores = zip(*results)
-    sil_scores = np.array(sil_scores)
+    # sil_scores = np.array(sil_scores)
     cal_scores = np.array(cal_scores)
-    dav_scores = np.array(dav_scores)
+    # dav_scores = np.array(dav_scores)
 
-    # Normalize the individual scores. Note: we invert davies because lower is better.
-    norm_sil = normalize_array(sil_scores)
-    norm_cal = normalize_array(cal_scores)
-    norm_dav = normalize_array(dav_scores)
+    # # Normalize the individual scores. Note: we invert davies because lower is better.
+    # norm_sil = normalize_array(sil_scores)
+    # norm_cal = normalize_array(cal_scores)
+    # norm_dav = normalize_array(dav_scores)
 
     # Compute the mean normalized score for each valid clustering
-    mean_norm = (norm_sil + norm_cal - norm_dav) / 3.0
-    best_idx = np.argmax(mean_norm)
+    # mean_norm = (norm_sil + norm_cal - norm_dav) / 3.0
+    best_idx = np.argmax(cal_scores)
 
     cluster_labels = labels_list[best_idx]
     print("Selected best random state:", rs_list[best_idx])
-    print("Best mean normalized score:", mean_norm[best_idx])
+    print("Best mean normalized score:", cal_scores[best_idx])
 
     assert cluster_labels is not None
 
