@@ -990,7 +990,7 @@ def analyze_and_visualize_similarity_matrix(
     norm_dav = normalize_array(dav_scores)
 
     # Compute the mean normalized score for each valid clustering
-    mean_norm = (norm_bal + norm_sil + norm_cal - norm_dav) / 3.0
+    mean_norm = 10.0 * norm_bal + norm_sil + norm_cal - norm_dav
     best_idx = np.argmax(mean_norm)
 
     cluster_labels = labels_list[best_idx]
