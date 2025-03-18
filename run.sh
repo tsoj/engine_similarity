@@ -2,7 +2,7 @@
 
 set -e
 
-python -u main6.py --repos \
+python -u main.py --repos \
 https://github.com/tsoj/Nalwald \
 https://github.com/jhonnold/berserk \
 https://github.com/Aryan1508/Bit-Genie \
@@ -92,6 +92,5 @@ https://github.com/JoAnnP38/PedanticRF \
 https://github.com/SnowballSH/Avalanche \
 https://github.com/Witek902/Caissa \
 https://github.com/brunocodutra/cinder \
---output-plot similarity_matrix.png \
 --output-graph similarity_graph.png \
 --temp-dir ./engine_similarity_temp
