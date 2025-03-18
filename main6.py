@@ -968,7 +968,7 @@ def analyze_and_visualize_similarity_matrix(
 
     cluster_labels = labels_list[best_idx]
     print("Selected best random state:", rs_list[best_idx])
-    print("Best mean normalized score:", cal_scores[best_idx])
+    print("Best mean normalized score:", mean_norm[best_idx])
 
     assert cluster_labels is not None
 
