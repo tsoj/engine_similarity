@@ -794,6 +794,30 @@ def analyze_and_visualize_similarity_matrix_OLD(
         'cluster_sizes': {i: np.sum(cluster_labels == i) for i in range(best_n_clusters)}
     }
 
+def balanced_clustering_score(labels):
+    """
+    Compute a clustering score based on the balance of cluster sizes.
+
+    Parameters:
+      labels (array-like): Cluster labels for each sample.
+
+    Returns:
+      normalized_entropy (float): A score in [0, 1] indicating the balance
+                                  of clusters. 1 indicates perfectly balanced,
+                                  and lower values indicate imbalance.
+    """
+    unique, counts = np.unique(labels, return_counts=True)
+
+    # If there's only one cluster, return 0 since balance is meaningless.
+    if len(unique) <= 1:
+        return 0.0
+
+    proportions = counts / counts.sum()
+    entropy_val = -np.sum(proportions * np.log(proportions))
+    normalized_entropy = entropy_val / np.log(len(unique))
+
+    return normalized_entropy
+
 def draw_gradient_edge(ax, pos, n1, n2, color1, color2, n_points=100, lw=2, alpha=1.0):
     """
     Draws an edge from node n1 to node n2 with a color gradient from color1 to color2.
@@ -942,28 +966,31 @@ def analyze_and_visualize_similarity_matrix(
             # Compute distance matrix from similarity matrix
             dist = 1.0 - similarity_matrix
             np.fill_diagonal(dist, 0)
+            bal = balanced_clustering_score(clustering.labels_)
             sil = silhouette_score(dist, clustering.labels_, metric='precomputed')
             cal = calinski_harabasz_score(dist, clustering.labels_)
             dav = davies_bouldin_score(dist, clustering.labels_)  # lower is better
-            results.append((rs, clustering.labels_, sil, cal, dav))
-            print(f"Random state: {rs}, silhouette: {sil:.4f}, calinski: {cal:.4f}, davies: {dav:.4f}")
+            results.append((rs, clustering.labels_, bal, sil, cal, dav))
+            print(f"Random state: {rs}, balanced: {bal:.4f}, silhouette: {sil:.4f}, calinski: {cal:.4f}, davies: {dav:.4f}")
 
     if not results:
         raise ValueError("No valid clustering found.")
 
     # Unpack the collected results
-    rs_list, labels_list, sil_scores, cal_scores, dav_scores = zip(*results)
+    rs_list, labels_list, bal_scores, sil_scores, cal_scores, dav_scores = zip(*results)
+    bal_scores = np.array(bal_scores)
     sil_scores = np.array(sil_scores)
     cal_scores = np.array(cal_scores)
     dav_scores = np.array(dav_scores)
 
     # # Normalize the individual scores. Note: we invert davies because lower is better.
+    norm_bal = normalize_array(bal_scores)
     norm_sil = normalize_array(sil_scores)
     norm_cal = normalize_array(cal_scores)
     norm_dav = normalize_array(dav_scores)
 
     # Compute the mean normalized score for each valid clustering
-    mean_norm = (norm_sil + norm_cal - norm_dav) / 3.0
+    mean_norm = (norm_bal + norm_sil + norm_cal - norm_dav) / 3.0
     best_idx = np.argmax(mean_norm)
 
     cluster_labels = labels_list[best_idx]
