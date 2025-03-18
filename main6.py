@@ -990,7 +990,7 @@ def analyze_and_visualize_similarity_matrix(
     norm_dav = normalize_array(dav_scores)
 
     # Compute the mean normalized score for each valid clustering
-    mean_norm = 5.0 * norm_bal + norm_sil + norm_cal - norm_dav
+    mean_norm = 4.5 * norm_bal + norm_sil + norm_cal - norm_dav
     best_idx = np.argmax(mean_norm)
 
     cluster_labels = labels_list[best_idx]
@@ -1039,7 +1039,7 @@ def analyze_and_visualize_similarity_matrix(
 
     # Create the heatmap with increased font size for better readability
     sns.heatmap(sorted_matrix*100.0, ax=ax1, annot=True, fmt=".0f", cmap="Blues",
-                    xticklabels=labels, yticklabels=labels, annot_kws={"size": 6})
+                    xticklabels=sorted_labels, yticklabels=sorted_labels, annot_kws={"size": 6})
 
     # # Rotate x-axis labels for better readability
     # ax1.xticks(rotation=45, ha='right', fontsize=max(8, 12 - 0.1*n))
@@ -1070,7 +1070,7 @@ def analyze_and_visualize_similarity_matrix(
         if G_layout.nodes[u]['cluster'] == G_layout.nodes[v]['cluster']:
             # Reduce distance (increase attraction) for nodes in same cluster
             # Original weight is between 0-1, use a scaling factor to emphasize cluster relationships
-            G_layout[u][v]['weight'] = G_layout[u][v]['weight'] * 3.8  # Amplify intra-cluster edge weights
+            G_layout[u][v]['weight'] = G_layout[u][v]['weight'] * 3.5  # Amplify intra-cluster edge weights
 
     # Use spring layout with the modified weights
     # In spring layout, higher weights mean stronger springs (shorter distances)
