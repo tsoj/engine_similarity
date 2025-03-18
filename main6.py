@@ -953,18 +953,18 @@ def analyze_and_visualize_similarity_matrix(
 
     # Unpack the collected results
     rs_list, labels_list, sil_scores, cal_scores, dav_scores = zip(*results)
-    # sil_scores = np.array(sil_scores)
+    sil_scores = np.array(sil_scores)
     cal_scores = np.array(cal_scores)
-    # dav_scores = np.array(dav_scores)
+    dav_scores = np.array(dav_scores)
 
     # # Normalize the individual scores. Note: we invert davies because lower is better.
-    # norm_sil = normalize_array(sil_scores)
-    # norm_cal = normalize_array(cal_scores)
-    # norm_dav = normalize_array(dav_scores)
+    norm_sil = normalize_array(sil_scores)
+    norm_cal = normalize_array(cal_scores)
+    norm_dav = normalize_array(dav_scores)
 
     # Compute the mean normalized score for each valid clustering
-    # mean_norm = (norm_sil + norm_cal - norm_dav) / 3.0
-    best_idx = np.argmax(cal_scores)
+    mean_norm = (norm_sil + norm_cal - norm_dav) / 3.0
+    best_idx = np.argmax(mean_norm)
 
     cluster_labels = labels_list[best_idx]
     print("Selected best random state:", rs_list[best_idx])
@@ -1043,7 +1043,7 @@ def analyze_and_visualize_similarity_matrix(
         if G_layout.nodes[u]['cluster'] == G_layout.nodes[v]['cluster']:
             # Reduce distance (increase attraction) for nodes in same cluster
             # Original weight is between 0-1, use a scaling factor to emphasize cluster relationships
-            G_layout[u][v]['weight'] = G_layout[u][v]['weight'] * 3.0  # Amplify intra-cluster edge weights
+            G_layout[u][v]['weight'] = G_layout[u][v]['weight'] * 3.5  # Amplify intra-cluster edge weights
 
     # Use spring layout with the modified weights
     # In spring layout, higher weights mean stronger springs (shorter distances)
@@ -1073,8 +1073,8 @@ def analyze_and_visualize_similarity_matrix(
 
     # Create a list of colors for the clusters
     cluster_colors = [
-        (0.8392156862745098,  0.15294117647058825, 0.1568627450980392  ),  # d62728 red
         (0.17254901960784313, 0.6274509803921569,  0.17254901960784313 ),  # 2ca02c green
+        (0.8392156862745098,  0.15294117647058825, 0.1568627450980392  ),  # d62728 red
         (0.5803921568627451,  0.403921568627451,   0.7411764705882353  ),  # 9467bd purple
         (0.238, 0.544,  0.789  ),  # 3d8bc9 light blue
         (1.0,                 0.4980392156862745,  0.054901960784313725),  # ff7f0e orange
