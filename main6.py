@@ -1070,14 +1070,14 @@ def analyze_and_visualize_similarity_matrix(
         if G_layout.nodes[u]['cluster'] == G_layout.nodes[v]['cluster']:
             # Reduce distance (increase attraction) for nodes in same cluster
             # Original weight is between 0-1, use a scaling factor to emphasize cluster relationships
-            G_layout[u][v]['weight'] = G_layout[u][v]['weight'] * 2.5  # Amplify intra-cluster edge weights
+            G_layout[u][v]['weight'] = G_layout[u][v]['weight'] * 2.7  # Amplify intra-cluster edge weights
 
     # Use spring layout with the modified weights
     # In spring layout, higher weights mean stronger springs (shorter distances)
     pos = nx.spring_layout(
         G_layout,
         weight='weight',  # Use the modified edge weights
-        k=0.35,  # Optimal distance between nodes (smaller value creates tighter clusters)
+        k=0.4,  # Optimal distance between nodes (smaller value creates tighter clusters)
         iterations=100,  # More iterations for better convergence
         seed=42  # For reproducibility
     )
@@ -1121,8 +1121,8 @@ def analyze_and_visualize_similarity_matrix(
     # Instead of drawing edges with draw_networkx_edges,
     # draw each edge with a color gradient:
     for n1, n2 in G_viz.edges():
-        alpha = np.power(G_viz[n1][n2]['weight'], 5.3)
-        width = max(0.8, alpha * 8.0)
+        alpha = np.power(G_viz[n1][n2]['weight'], 5.0)
+        width = max(0.8, alpha * 7.0)
         color1 = node_colors[n1][:3]
         color2 = node_colors[n2][:3]
         draw_gradient_edge(ax2, pos, n1, n2, color2, color1, n_points=200, lw=width, alpha=alpha)
