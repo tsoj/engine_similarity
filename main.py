@@ -394,7 +394,7 @@ def analyze_and_visualize_similarity_matrix(
             cal = calinski_harabasz_score(dist, clustering.labels_)
             dav = davies_bouldin_score(dist, clustering.labels_)  # lower is better
             results.append((rs, clustering.labels_, bal, sil, cal, dav))
-            print(f"Random state: {rs}, balanced: {bal:.4f}, silhouette: {sil:.4f}, calinski: {cal:.4f}, davies: {dav:.4f}")
+            # print(f"Random state: {rs}, balanced: {bal:.4f}, silhouette: {sil:.4f}, calinski: {cal:.4f}, davies: {dav:.4f}")
 
     if not results:
         raise ValueError("No valid clustering found.")
@@ -417,8 +417,8 @@ def analyze_and_visualize_similarity_matrix(
     best_idx = np.argmax(mean_norm)
 
     cluster_labels = labels_list[best_idx]
-    print("Selected best random state:", rs_list[best_idx])
-    print("Best mean normalized score:", mean_norm[best_idx])
+    # print("Selected best random state:", rs_list[best_idx])
+    # print("Best mean normalized score:", mean_norm[best_idx])
 
     assert cluster_labels is not None
 
