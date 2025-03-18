@@ -897,7 +897,7 @@ def analyze_and_visualize_similarity_matrix(
     # distance_matrix = 1 - similarity_matrix
 
     # Find optimal number of clusters using silhouette score
-    n_clusters = 6  # Default starting point
+    n_clusters = 5  # Default starting point
     # random_state = -1
 
     # Try different cluster counts from 2 to min(10, n-1)
@@ -990,7 +990,7 @@ def analyze_and_visualize_similarity_matrix(
     norm_dav = normalize_array(dav_scores)
 
     # Compute the mean normalized score for each valid clustering
-    mean_norm = 10.0 * norm_bal + norm_sil + norm_cal - norm_dav
+    mean_norm = 3.0 * norm_bal + norm_sil + norm_cal - norm_dav
     best_idx = np.argmax(mean_norm)
 
     cluster_labels = labels_list[best_idx]
@@ -1070,7 +1070,7 @@ def analyze_and_visualize_similarity_matrix(
         if G_layout.nodes[u]['cluster'] == G_layout.nodes[v]['cluster']:
             # Reduce distance (increase attraction) for nodes in same cluster
             # Original weight is between 0-1, use a scaling factor to emphasize cluster relationships
-            G_layout[u][v]['weight'] = G_layout[u][v]['weight'] * 3.5  # Amplify intra-cluster edge weights
+            G_layout[u][v]['weight'] = G_layout[u][v]['weight'] * 4.0  # Amplify intra-cluster edge weights
 
     # Use spring layout with the modified weights
     # In spring layout, higher weights mean stronger springs (shorter distances)
