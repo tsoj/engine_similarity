@@ -397,7 +397,7 @@ def analyze_and_visualize_similarity_matrix(
                 cal = calinski_harabasz_score(dist, clustering.labels_)
                 dav = davies_bouldin_score(dist, clustering.labels_)  # lower is better
                 results.append((n_clusters, rs, clustering.labels_, bal, sil, cal, dav))
-                print(f"Random state: {rs}, balanced: {bal:.4f}, silhouette: {sil:.4f}, calinski: {cal:.4f}, davies: {dav:.4f}")
+                # print(f"Random state: {rs}, balanced: {bal:.4f}, silhouette: {sil:.4f}, calinski: {cal:.4f}, davies: {dav:.4f}")
 
     if not results:
         raise ValueError("No valid clustering found.")
