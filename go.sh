@@ -101,7 +101,9 @@ https://github.com/Warpten/Fruit-2.1 \
 --temp-dir ./engine_similarity_temp
 
 
-python -u translate_files_to_cpp.py ./raw_search_files ./translated_search_files
+#python -u translate_files_to_cpp.py ./raw_search_files ./translated_search_files
 
 
-python -u clang_format_files.py ./translated_search_files ./formatted_search_files
+#python -u clang_format_files.py ./translated_search_files ./formatted_search_files
+
+python -u similarity_analysis.py ./formatted_search_files --output-graph similarity_graph.png

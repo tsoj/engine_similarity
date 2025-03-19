@@ -43,120 +43,22 @@ from scipy.cluster.hierarchy import dendrogram
 from sklearn.metrics import calinski_harabasz_score
 from sklearn.metrics import davies_bouldin_score
 
-def parse_github_url(url: str) -> str:
-    """Extract the repository name from a GitHub URL."""
-    # Handle different GitHub URL formats
-    patterns = [
-        r'https?://github\.com/([^/]+/[^/]+)',
-        r'git@github\.com:([^/]+/[^/]+)\.git',
-        r'https?://github\.com/([^/]+/[^/]+)\.git'
+def load_model() -> List[SentenceTransformer]:
+    model_names = [
+        # # "sentence-transformers/sentence-t5-xl",
+        # "sentence-transformers/sentence-t5-xxl",
+        # "sentence-transformers/all-distilroberta-v1",
+        # "sentence-transformers/all-MiniLM-L12-v2",
+        # # # "sentence-transformers/all-MiniLM-L6-v2",
+        "sentence-transformers/all-mpnet-base-v2",
+        # "Alibaba-NLP/gte-Qwen2-7B-instruct",
+        # "Kwaipilot/OASIS-code-embedding-1.5B",
+        # "Salesforce/SFR-Embedding-Code-2B_R",
+        # "flax-sentence-embeddings/st-codesearch-distilroberta-base",
+        # "nomic-ai/CodeRankEmbed",
     ]
-
-    for pattern in patterns:
-        match = re.search(pattern, url)
-        if match:
-            return match.group(1)
-
-    # If it's just the repo name format (user/repo)
-    if '/' in url and url.count('/') == 1 and not url.startswith('http') and not url.startswith('git@'):
-        return url
-
-    raise ValueError(f"Could not parse GitHub repository from URL: {url}")
-
-def get_repo_name_without_username(full_repo_name: str) -> str:
-    """Extract just the repository name without the username."""
-    if '/' in full_repo_name:
-        return full_repo_name.split('/')[-1]
-    return full_repo_name
-
-def clone_repository(repo_url: str, temp_dir: str, depth: int = 1) -> Optional[str]:
-    """
-    Clone a GitHub repository to a temporary directory.
-    Returns the path to the cloned repository or None if cloning failed.
-    """
-    repo_name = parse_github_url(repo_url)
-    repo_dir = os.path.join(temp_dir, repo_name.replace('/', '_'))
-
-    # Ensure the URL has the correct format
-    if not repo_url.startswith(('http://', 'https://', 'git@')):
-        repo_url = f"https://github.com/{repo_url}"
-
-    if os.path.exists(repo_dir):
-        print(f"Repo {repo_url} already downloaded to {repo_dir}")
-    else:
-        print(f"Cloning {repo_url} to {repo_dir}...")
-
-        try:
-            # Clone with depth=1 to only get the latest commit
-            # --filter=blob:none avoids downloading binary blobs until accessed
-            subprocess.run(
-                ["git", "clone", "--depth", str(depth), "--filter=blob:none", repo_url, repo_dir],
-                check=True,
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE
-            )
-        except subprocess.CalledProcessError as e:
-            print(f"Error cloning repository {repo_url}: {e}")
-            print(f"stderr: {e.stderr.decode()}")
-            if os.path.exists(repo_dir):
-                shutil.rmtree(repo_dir)
-            return None
-
-    return repo_dir
-
-def find_search_files(repo_dir: str, repo_name: str) -> List[str]:
-    """Find all files matching the search patterns in the repository, applying special rules where necessary."""
-    patterns = [
-        "search.*", "searches.*", "negamax.*", "mybot.*", "alphabeta.*",
-        "pvs.*", "search_manager.*", "search_worker.*", "searcher.*", "chess_search.*"
-    ]
-
-    special_rules = {
-        "calvin-chess-engine": "Searcher.java",
-        "Lynx": "negamax.cs",
-        "Prelude": "search.cpp",
-        "FabChess": "alphabeta.rs",
-        "motors": "caps.rs",
-        "autaxx": "tryhard/search.cpp",
-        "veritas": "engine.rs",
-        "mess": "negamax.go",
-        "Leorik": "IterativeSearch.cs",
-        "peacekeeper": "main.cpp",
-        "PedanticRF": "BasicSearch.cs",
-        "hactar": "search/mod.rs",
-        "cinder": "search/engine.rs",
-        "4ku": "main.cpp",
-        "Fruit-2.1": "search_full.cpp"
-    }
-
-    if repo_name in special_rules:
-        patterns = [special_rules[repo_name]] + patterns
-
-    search_files = []
-    for pattern in patterns:
-        found_files = [str(path) for path in Path(repo_dir).rglob(pattern, case_sensitive=False)]
-        search_files.extend(f for f in found_files if not f.lower().endswith('.html') and f not in search_files)
-
-    # Filter out headers if a corresponding implementation exists
-    preferred_files, header_files = [], {}
-
-    for file in search_files:
-        lower_file = file.lower()
-        if lower_file.endswith(('.h', '.hpp')):
-            base_name = os.path.splitext(os.path.basename(file))[0]
-            header_files[base_name] = file
-        else:
-            preferred_files.append(file)
-
-    for base_name, header in header_files.items():
-        has_impl = any(
-            file.lower().endswith((f"{base_name}.c", f"{base_name}.cc", f"{base_name}.cpp"))
-            for file in preferred_files
-        )
-        if not has_impl:
-            preferred_files.append(header)
-
-    return preferred_files
+    print(f"Loading models:", model_names)
+    return [SentenceTransformer(model_name, trust_remote_code=True, model_kwargs={"torch_dtype": "float16"}) for model_name in model_names]
 
 def read_code_file(file_path: str) -> str:
     """Read a code file and return its contents as a string."""
@@ -226,7 +128,7 @@ def get_embeddings(
     # Return as row vector
     return combined_embedding.reshape(1, -1)
 
-def calculate_similarity_rankings(similarity_matrix: np.ndarray, file_infos: List[Dict]) -> List[Dict]:
+def calculate_similarity_rankings(similarity_matrix: np.ndarray, labels: List[str]) -> List[Dict]:
     """
     Calculate average similarity of each file to all other files and return a ranked list.
     Higher average similarity score means the file is more similar to others.
@@ -241,10 +143,9 @@ def calculate_similarity_rankings(similarity_matrix: np.ndarray, file_infos: Lis
 
     # Create list of files with their average similarity
     similarity_rankings = []
-    for i, info in enumerate(file_infos):
+    for i, name in enumerate(labels):
         similarity_rankings.append({
-            'repo': info['repo'],
-            'rel_path': info['rel_path'],
+            'label': name,
             'avg_similarity': avg_similarities[i]
         })
 
@@ -252,7 +153,6 @@ def calculate_similarity_rankings(similarity_matrix: np.ndarray, file_infos: Lis
     similarity_rankings.sort(key=lambda x: x['avg_similarity'], reverse=True)
 
     return similarity_rankings
-
 
 def normalize_array(values, invert=False):
     """Normalize a numpy array to [0, 1]. Invert if lower values are better."""
@@ -554,64 +454,10 @@ def analyze_and_visualize_similarity_matrix(
 
 def main():
     parser = argparse.ArgumentParser(description='Clone GitHub repos, find search files, analyze similarity and visualize clusters.')
-    parser.add_argument('--repos', type=str, nargs='+', required=True,
-                      help='List of GitHub repository URLs or {owner}/{repo} names')
-    parser.add_argument('--temp-dir', type=str, default=None,
-                      help='Custom temporary directory to use (default is system temp dir)')
+    parser.add_argument('--intput-dir', type=str, required=True)
     parser.add_argument('--output-graph', type=str, default=None,
                       help='Output file for the graph visualization')
     args = parser.parse_args()
-
-    # Create temporary directory if not specified
-    temp_dir = args.temp_dir
-    if temp_dir is None:
-        temp_dir = tempfile.mkdtemp(prefix="github_similarity_")
-    else:
-        os.makedirs(temp_dir, exist_ok=True)
-
-    print(f"Using temporary directory: {temp_dir}")
-
-    # Clone repositories
-    repo_dirs = []
-    repo_urls = []
-    for repo_url in args.repos:
-        repo_dir = clone_repository(repo_url, temp_dir)
-        if repo_dir:
-            repo_dirs.append(repo_dir)
-            repo_urls.append(repo_url)
-
-    if not repo_dirs:
-        print("Failed to clone any repositories.")
-        return
-
-    # Find search files in each repository
-    all_file_infos = []
-
-    for i, repo_dir in enumerate(repo_dirs):
-        repo_base = os.path.basename(repo_dir)
-        repo_name = parse_github_url(repo_urls[i])
-        search_files = find_search_files(repo_dir, get_repo_name_without_username(repo_name))
-
-        if search_files:
-            for i, file_path in enumerate(search_files):
-                rel_path = Path(file_path).relative_to(repo_dir).as_posix()
-                if i == 0:
-                    print(f"Using {rel_path} in {repo_name}")
-                    all_file_infos.append({
-                        'abs_path': file_path,
-                        'rel_path': rel_path,
-                        'repo': repo_name,
-                        'repo_dir': repo_dir
-                    })
-                else:
-                    print(f"Skipping {rel_path} in {repo_name}")
-
-        else:
-            print(f"No matching files found in {repo_name}")
-
-    if not all_file_infos:
-        print("No matching files found in any repository.")
-        return
 
     # Load the model
     model = load_model()
@@ -619,16 +465,29 @@ def main():
     # Get embeddings for each file
     print("Generating embeddings...")
     embeddings = []
-    valid_file_infos = []
+    label_list = []
 
-    for file_info in tqdm(all_file_infos):
+    for file_name in tqdm(list(os.listdir(args.intput_dir))):
+        if not os.path.isfile(os.path.join(args.intput_dir, file_name)):
+            continue
+
+    #for file_info in tqdm(all_file_infos):
         try:
-            code = read_code_file(file_info['abs_path'])
+            code = read_code_file(file_name)
             embedding = get_embeddings(code, model)
             embeddings.append(embedding)
-            valid_file_infos.append(file_info)
+
+            label = os.path.splitext(os.path.basename(file_name))[0]
+
+            for suffix in [
+                "ChessEngine", "-chess-engine", "-bot", "-Chess", "Chess", "-Engine", "Engine"
+            ]:
+                if label.endswith(suffix) and label != "FabChess":
+                    label = label[:-len(suffix)]
+
+            label_list.append(label)
         except Exception as e:
-            print(f"Error processing {file_info['abs_path']}: {e}")
+            print(f"Error processing {file_name}: {e}")
 
     if not embeddings:
         print("Failed to generate embeddings for any files.")
@@ -640,27 +499,16 @@ def main():
 
 
     # Calculate similarity rankings
-    similarity_rankings = calculate_similarity_rankings(similarity_matrix, valid_file_infos)
+    similarity_rankings = calculate_similarity_rankings(similarity_matrix, label_list)
 
 
     # Print similarity rankings
     print("\nFiles ranked by average similarity to other files (most to least similar):")
     for i, info in enumerate(similarity_rankings):
-        repo_name = get_repo_name_without_username(info['repo'])
-        print(f"{i+1}. {repo_name} - {info['rel_path']} (Avg similarity: {info['avg_similarity']:.4f})")
-
+        print(f"{i+1}. {info['label']} (Avg similarity: {info['avg_similarity']:.4f})")
 
     # Perform cluster analysis
-    labels = []
-    for info in valid_file_infos:
-        label = get_repo_name_without_username(info["repo"])
-        for suffix in [
-            "ChessEngine", "-chess-engine", "-bot", "-Chess", "Chess", "-Engine", "Engine"
-        ]:
-            if label.endswith(suffix) and label != "FabChess":
-                label = label[:-len(suffix)]
-        labels.append(label)
-    analyze_and_visualize_similarity_matrix(similarity_matrix, labels, args.output_graph)
+    analyze_and_visualize_similarity_matrix(similarity_matrix, label_list, args.output_graph)
 
 
 if __name__ == "__main__":

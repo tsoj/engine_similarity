@@ -68,7 +68,7 @@ def create_batch_request(batch_items: List[Dict[str, Any]], client):
                 params=anthropic.types.message_create_params.MessageCreateParamsNonStreaming(
                     #model="claude-3-5-haiku-20241022",
                     model="claude-3-7-sonnet-20250219",
-                    max_tokens=12000,
+                    max_tokens=30000,
                     messages=item["messages"]
                 )
             )
