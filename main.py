@@ -379,7 +379,7 @@ def analyze_and_visualize_similarity_matrix(
 
     # Collect valid clustering results: we store tuple (random_state, labels, silhouette, calinski, davies)
     results = []
-    for n_clusters in range(1, min(10, similarity_matrix.shape[0] - 1)):
+    for n_clusters in tqdm(range(1, min(10, similarity_matrix.shape[0] - 1))):
         for rs in range(1000):
             clustering = SpectralClustering(
                 n_clusters=n_clusters,
@@ -459,6 +459,11 @@ def analyze_and_visualize_similarity_matrix(
         # Get indices of samples in this cluster
         cluster_indices = np.where(cluster_labels == cluster_id)[0]
         print("cluster_indices:", cluster_indices)
+
+        if len(cluster_indices) == 1:
+            idx.extend(cluster_indices)
+            continue
+
 
         # Extract the submatrix for this cluster
         submatrix = similarity_matrix[np.ix_(cluster_indices, cluster_indices)]
