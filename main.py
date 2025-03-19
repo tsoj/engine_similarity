@@ -448,9 +448,35 @@ def analyze_and_visualize_similarity_matrix(
     figsize = (45, 20)
     fig, (ax1, ax2) = plt.subplots(1, 2, figsize=figsize)
 
-    # 1. Heatmap visualization with hierarchical clustering
-    # Sort by cluster
-    idx = np.argsort(cluster_labels)
+
+    unique_clusters = np.unique(cluster_labels)
+
+    idx = []
+
+    # For each spectral cluster
+    for cluster_id in unique_clusters:
+        # Get indices of samples in this cluster
+        cluster_indices = np.where(cluster_labels == cluster_id)[0]
+
+        # Extract the submatrix for this cluster
+        submatrix = similarity_matrix[np.ix_(cluster_indices, cluster_indices)]
+
+        # Convert similarity to distance for hierarchical clustering
+        # (Assuming similarity values are between 0 and 1)
+        distance_matrix = 1 - submatrix
+
+        # Perform hierarchical clustering on this submatrix
+        linkage = hierarchy.linkage(distance_matrix, method='ward')
+
+        # Get the hierarchical clustering order
+        hierarchical_order = hierarchy.leaves_list(linkage)
+
+        # Use this order to sort the cluster indices
+        sorted_cluster_indices = cluster_indices[hierarchical_order]
+
+        # Add to our final sorted indices
+        idx.extend(sorted_cluster_indices)
+
     sorted_matrix = similarity_matrix[idx][:, idx]
     sorted_labels = [labels[i] for i in idx]
 
