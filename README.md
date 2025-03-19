@@ -8,7 +8,6 @@ pip install accelerate seaborn numpy scikit-learn matplotlib sentence_transforme
 ./run.sh
 ```
 
-## Fancy graphics
-
+## Fancy graph
 
 ![alt text](similarity_graph_March-2025.jpeg)
