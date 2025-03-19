@@ -234,7 +234,7 @@ def get_embeddings(
         else:
             model_embedding = chunk_embeddings[0]
 
-        model_embeddings[i] = model_embedding
+        model_embeddings[i] = model_embedding / np.linalg.norm(model_embedding)
 
     # Flatten dictionary to list in order of indices
     embedding_list = [model_embeddings[i] for i in range(len(models))]
