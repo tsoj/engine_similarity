@@ -396,14 +396,14 @@ def analyze_and_visualize_similarity_matrix(
                 sil = silhouette_score(dist, clustering.labels_, metric='precomputed')
                 cal = calinski_harabasz_score(dist, clustering.labels_)
                 dav = davies_bouldin_score(dist, clustering.labels_)  # lower is better
-                results.append((rs, clustering.labels_, bal, sil, cal, dav))
-                # print(f"Random state: {rs}, balanced: {bal:.4f}, silhouette: {sil:.4f}, calinski: {cal:.4f}, davies: {dav:.4f}")
+                results.append((n_clusters, rs, clustering.labels_, bal, sil, cal, dav))
+                print(f"Random state: {rs}, balanced: {bal:.4f}, silhouette: {sil:.4f}, calinski: {cal:.4f}, davies: {dav:.4f}")
 
     if not results:
         raise ValueError("No valid clustering found.")
 
     # Unpack the collected results
-    rs_list, labels_list, bal_scores, sil_scores, cal_scores, dav_scores = zip(*results)
+    n_cluster_list, rs_list, labels_list, bal_scores, sil_scores, cal_scores, dav_scores = zip(*results)
     bal_scores = np.array(bal_scores)
     sil_scores = np.array(sil_scores)
     cal_scores = np.array(cal_scores)
@@ -420,8 +420,9 @@ def analyze_and_visualize_similarity_matrix(
     best_idx = np.argmax(mean_norm)
 
     cluster_labels = labels_list[best_idx]
-    # print("Selected best random state:", rs_list[best_idx])
-    # print("Best mean normalized score:", mean_norm[best_idx])
+    print("Selected best n_cluster:", n_cluster_list[best_idx])
+    print("Selected best random state:", rs_list[best_idx])
+    print("Best mean normalized score:", mean_norm[best_idx])
 
     assert cluster_labels is not None
 
@@ -453,16 +454,6 @@ def analyze_and_visualize_similarity_matrix(
     sorted_matrix = similarity_matrix[idx][:, idx]
     sorted_labels = [labels[i] for i in idx]
 
-    # # Custom colormap: white to blue
-    # cmap = LinearSegmentedColormap.from_list("white_to_blue", ["#ffffff", "#1f77b4"])
-
-    # # Plot heatmap
-    # sns.set(font_scale=0.5)
-    # sns.heatmap(sorted_matrix, xticklabels=sorted_labels, yticklabels=sorted_labels,
-    #             cmap=cmap, vmin=0, vmax=1, , cbar_kws={'label': 'Similarity'})
-    # ax1.set_title(f'Similarity Matrix (Sorted by {n_clusters} Clusters)')
-
-
     # Create the heatmap with increased font size for better readability
     sns.heatmap(sorted_matrix*100.0, ax=ax1, annot=True, fmt=".0f", cmap="Blues",
                     xticklabels=sorted_labels, yticklabels=sorted_labels, annot_kws={"size": 6})
@@ -485,13 +476,13 @@ def analyze_and_visualize_similarity_matrix(
     # 2. Network graph visualization
     G_layout = G.copy()
 
-    # # Modify edge weights based on cluster membership
-    # for u, v in G_layout.edges():
-    #     # Check if nodes belong to the same cluster
-    #     if G_layout.nodes[u]['cluster'] == G_layout.nodes[v]['cluster']:
-    #         # Reduce distance (increase attraction) for nodes in same cluster
-    #         # Original weight is between 0-1, use a scaling factor to emphasize cluster relationships
-    #         G_layout[u][v]['weight'] = G_layout[u][v]['weight'] * 2.8  # Amplify intra-cluster edge weights
+    # Modify edge weights based on cluster membership
+    for u, v in G_layout.edges():
+        # Check if nodes belong to the same cluster
+        if G_layout.nodes[u]['cluster'] == G_layout.nodes[v]['cluster']:
+            # Reduce distance (increase attraction) for nodes in same cluster
+            # Original weight is between 0-1, use a scaling factor to emphasize cluster relationships
+            G_layout[u][v]['weight'] = G_layout[u][v]['weight'] * 2.8  # Amplify intra-cluster edge weights
 
     # Use spring layout with the modified weights
     # In spring layout, higher weights mean stronger springs (shorter distances)
