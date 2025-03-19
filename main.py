@@ -416,7 +416,7 @@ def analyze_and_visualize_similarity_matrix(
     norm_dav = normalize_array(dav_scores)
 
     # Compute the mean normalized score for each valid clustering
-    mean_norm = 1.0 * norm_bal + norm_sil + norm_cal - norm_dav
+    mean_norm = 0.0 * norm_bal + norm_sil + norm_cal - norm_dav
     best_idx = np.argmax(mean_norm)
 
     cluster_labels = labels_list[best_idx]
@@ -476,13 +476,13 @@ def analyze_and_visualize_similarity_matrix(
     # 2. Network graph visualization
     G_layout = G.copy()
 
-    # Modify edge weights based on cluster membership
-    for u, v in G_layout.edges():
-        # Check if nodes belong to the same cluster
-        if G_layout.nodes[u]['cluster'] == G_layout.nodes[v]['cluster']:
-            # Reduce distance (increase attraction) for nodes in same cluster
-            # Original weight is between 0-1, use a scaling factor to emphasize cluster relationships
-            G_layout[u][v]['weight'] = G_layout[u][v]['weight'] * 2.8  # Amplify intra-cluster edge weights
+    # # Modify edge weights based on cluster membership
+    # for u, v in G_layout.edges():
+    #     # Check if nodes belong to the same cluster
+    #     if G_layout.nodes[u]['cluster'] == G_layout.nodes[v]['cluster']:
+    #         # Reduce distance (increase attraction) for nodes in same cluster
+    #         # Original weight is between 0-1, use a scaling factor to emphasize cluster relationships
+    #         G_layout[u][v]['weight'] = G_layout[u][v]['weight'] * 2.8  # Amplify intra-cluster edge weights
 
     # Use spring layout with the modified weights
     # In spring layout, higher weights mean stronger springs (shorter distances)
