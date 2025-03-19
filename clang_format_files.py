@@ -82,7 +82,7 @@ def main():
 
     # Iterate over each file in the source directory.
     for src_file in src_dir.iterdir():
-        if src_file.is_file() and src_file.suffix in {".cpp", ".h", ".hpp"}:
+        if src_file.is_file() and src_file.suffix in {".cpp", ".c", ".cc", ".cxx", ".h", ".hpp", ".hxx"}:
             target_file = target_dir / src_file.name
             apply_clang_format(src_file, target_file)
 
