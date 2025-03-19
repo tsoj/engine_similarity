@@ -452,13 +452,10 @@ def analyze_and_visualize_similarity_matrix(
     unique_clusters = np.unique(cluster_labels)
 
     idx = []
-    print("cluster_labels:", cluster_labels)
-    print("unique_clusters:", unique_clusters)
     # For each spectral cluster
     for cluster_id in unique_clusters:
         # Get indices of samples in this cluster
         cluster_indices = np.where(cluster_labels == cluster_id)[0]
-        print("cluster_indices:", cluster_indices)
 
         if len(cluster_indices) == 1:
             idx.extend(cluster_indices)
@@ -467,7 +464,6 @@ def analyze_and_visualize_similarity_matrix(
 
         # Extract the submatrix for this cluster
         submatrix = similarity_matrix[np.ix_(cluster_indices, cluster_indices)]
-        print("submatrix:", submatrix)
 
         # Convert similarity to distance for hierarchical clustering
         # (Assuming similarity values are between 0 and 1)
