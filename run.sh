@@ -94,5 +94,7 @@ https://github.com/Witek902/Caissa \
 https://github.com/brunocodutra/cinder \
 https://github.com/kz04px/4ku \
 https://github.com/TheRealGioviok/Perseus-Engine \
+https://github.com/phenri/glaurung \
+https://github.com/Warpten/Fruit-2.1 \
 --output-graph similarity_graph.png \
 --temp-dir ./engine_similarity_temp
