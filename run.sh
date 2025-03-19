@@ -92,5 +92,7 @@ https://github.com/JoAnnP38/PedanticRF \
 https://github.com/SnowballSH/Avalanche \
 https://github.com/Witek902/Caissa \
 https://github.com/brunocodutra/cinder \
+https://github.com/kz04px/4ku \
+https://github.com/TheRealGioviok/Perseus-Engine \
 --output-graph similarity_graph.png \
 --temp-dir ./engine_similarity_temp

@@ -124,7 +124,8 @@ def find_search_files(repo_dir: str, repo_name: str) -> List[str]:
         "peacekeeper": "main.cpp",
         "PedanticRF": "BasicSearch.cs",
         "hactar": "search/mod.rs",
-        "cinder": "search/engine.rs"
+        "cinder": "search/engine.rs",
+        "4ku": "main.cpp"
     }
 
     if repo_name in special_rules:
