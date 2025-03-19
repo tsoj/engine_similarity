@@ -160,16 +160,16 @@ def find_search_files(repo_dir: str, repo_name: str) -> List[str]:
 
 def load_model() -> List[SentenceTransformer]:
     model_names = [
-        # "sentence-transformers/sentence-t5-xl",
-        "sentence-transformers/sentence-t5-xxl",
-        "sentence-transformers/all-distilroberta-v1",
-        "sentence-transformers/all-MiniLM-L12-v2",
-        # # "sentence-transformers/all-MiniLM-L6-v2",
-        "sentence-transformers/all-mpnet-base-v2",
-        "Alibaba-NLP/gte-Qwen2-7B-instruct",
-        "Kwaipilot/OASIS-code-embedding-1.5B",
-        "Salesforce/SFR-Embedding-Code-2B_R",
-        "flax-sentence-embeddings/st-codesearch-distilroberta-base",
+        # # "sentence-transformers/sentence-t5-xl",
+        # "sentence-transformers/sentence-t5-xxl",
+        # "sentence-transformers/all-distilroberta-v1",
+        # "sentence-transformers/all-MiniLM-L12-v2",
+        # # # "sentence-transformers/all-MiniLM-L6-v2",
+        # "sentence-transformers/all-mpnet-base-v2",
+        # "Alibaba-NLP/gte-Qwen2-7B-instruct",
+        # "Kwaipilot/OASIS-code-embedding-1.5B",
+        # "Salesforce/SFR-Embedding-Code-2B_R",
+        # "flax-sentence-embeddings/st-codesearch-distilroberta-base",
         "nomic-ai/CodeRankEmbed",
     ]
     print(f"Loading models:", model_names)
@@ -452,14 +452,17 @@ def analyze_and_visualize_similarity_matrix(
     unique_clusters = np.unique(cluster_labels)
 
     idx = []
-
+    print("cluster_labels:", cluster_labels)
+    print("unique_clusters:", unique_clusters)
     # For each spectral cluster
     for cluster_id in unique_clusters:
         # Get indices of samples in this cluster
         cluster_indices = np.where(cluster_labels == cluster_id)[0]
+        print("cluster_indices:", cluster_indices)
 
         # Extract the submatrix for this cluster
         submatrix = similarity_matrix[np.ix_(cluster_indices, cluster_indices)]
+        print("submatrix:", submatrix)
 
         # Convert similarity to distance for hierarchical clustering
         # (Assuming similarity values are between 0 and 1)
