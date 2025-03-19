@@ -45,17 +45,17 @@ from sklearn.metrics import davies_bouldin_score
 
 def load_model() -> List[SentenceTransformer]:
     model_names = [
-        # # "sentence-transformers/sentence-t5-xl",
-        # "sentence-transformers/sentence-t5-xxl",
-        # "sentence-transformers/all-distilroberta-v1",
-        # "sentence-transformers/all-MiniLM-L12-v2",
-        # # # "sentence-transformers/all-MiniLM-L6-v2",
+        # "sentence-transformers/sentence-t5-xl",
+        "sentence-transformers/sentence-t5-xxl",
+        "sentence-transformers/all-distilroberta-v1",
+        "sentence-transformers/all-MiniLM-L12-v2",
+        # # "sentence-transformers/all-MiniLM-L6-v2",
         "sentence-transformers/all-mpnet-base-v2",
-        # "Alibaba-NLP/gte-Qwen2-7B-instruct",
-        # "Kwaipilot/OASIS-code-embedding-1.5B",
-        # "Salesforce/SFR-Embedding-Code-2B_R",
-        # "flax-sentence-embeddings/st-codesearch-distilroberta-base",
-        # "nomic-ai/CodeRankEmbed",
+        "Alibaba-NLP/gte-Qwen2-7B-instruct",
+        "Kwaipilot/OASIS-code-embedding-1.5B",
+        "Salesforce/SFR-Embedding-Code-2B_R",
+        "flax-sentence-embeddings/st-codesearch-distilroberta-base",
+        "nomic-ai/CodeRankEmbed",
     ]
     print(f"Loading models:", model_names)
     return [SentenceTransformer(model_name, trust_remote_code=True, model_kwargs={"torch_dtype": "float16"}) for model_name in model_names]
