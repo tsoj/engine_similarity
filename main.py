@@ -158,23 +158,6 @@ def find_search_files(repo_dir: str, repo_name: str) -> List[str]:
 
     return preferred_files
 
-def load_model() -> List[SentenceTransformer]:
-    model_names = [
-        # "sentence-transformers/sentence-t5-xl",
-        "sentence-transformers/sentence-t5-xxl",
-        "sentence-transformers/all-distilroberta-v1",
-        "sentence-transformers/all-MiniLM-L12-v2",
-        # # "sentence-transformers/all-MiniLM-L6-v2",
-        "sentence-transformers/all-mpnet-base-v2",
-        "Alibaba-NLP/gte-Qwen2-7B-instruct",
-        "Kwaipilot/OASIS-code-embedding-1.5B",
-        "Salesforce/SFR-Embedding-Code-2B_R",
-        "flax-sentence-embeddings/st-codesearch-distilroberta-base",
-        "nomic-ai/CodeRankEmbed",
-    ]
-    print(f"Loading models:", model_names)
-    return [SentenceTransformer(model_name, trust_remote_code=True, model_kwargs={"torch_dtype": "float16"}) for model_name in model_names]
-
 def read_code_file(file_path: str) -> str:
     """Read a code file and return its contents as a string."""
     if not os.path.exists(file_path):
@@ -672,7 +655,7 @@ def main():
     for info in valid_file_infos:
         label = get_repo_name_without_username(info["repo"])
         for suffix in [
-            "ChessEngine", "-chess-engine", "-bot", "-Chess", "Chess", "Engine"
+            "ChessEngine", "-chess-engine", "-bot", "-Chess", "Chess", "-Engine", "Engine"
         ]:
             if label.endswith(suffix) and label != "FabChess":
                 label = label[:-len(suffix)]
