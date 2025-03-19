@@ -454,7 +454,7 @@ def analyze_and_visualize_similarity_matrix(
 
 def main():
     parser = argparse.ArgumentParser(description='Clone GitHub repos, find search files, analyze similarity and visualize clusters.')
-    parser.add_argument('input-dir', type=str)
+    parser.add_argument('input_dir', type=str)
     parser.add_argument('--output-graph', type=str, default=None,
                       help='Output file for the graph visualization')
     args = parser.parse_args()
