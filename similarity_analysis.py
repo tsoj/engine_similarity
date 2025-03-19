@@ -468,16 +468,17 @@ def main():
     label_list = []
 
     for file_name in tqdm(list(os.listdir(args.input_dir))):
-        if not os.path.isfile(os.path.join(args.input_dir, file_name)):
+        file_path = os.path.join(args.input_dir, file_name)
+        if not os.path.isfile(file_path):
             continue
 
     #for file_info in tqdm(all_file_infos):
         try:
-            code = read_code_file(file_name)
+            code = read_code_file(file_path)
             embedding = get_embeddings(code, model)
             embeddings.append(embedding)
 
-            label = os.path.splitext(os.path.basename(file_name))[0]
+            label = os.path.splitext(os.path.basename(file_path))[0]
 
             for suffix in [
                 "ChessEngine", "-chess-engine", "-bot", "-Chess", "Chess", "-Engine", "Engine"
@@ -487,7 +488,7 @@ def main():
 
             label_list.append(label)
         except Exception as e:
-            print(f"Error processing {file_name}: {e}")
+            print(f"Error processing {file_path}: {e}")
 
     if not embeddings:
         print("Failed to generate embeddings for any files.")
