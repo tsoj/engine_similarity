@@ -200,8 +200,6 @@ def main():
             args.out_dir + "/" +  get_repo_name_without_username(info["repo"]) + "." + info["abs_path"].split('.')[-1]
         )
 
-    print(all_file_infos)
-
 
 if __name__ == "__main__":
     main()
