@@ -341,7 +341,7 @@ def analyze_and_visualize_similarity_matrix(
     similarity_matrix: np.ndarray,
     labels: List[str],
     output_graph: str,
-    n_clusters = 5
+    # n_clusters = 5
 ):
     """
     Analyze a similarity matrix to find optimal clustering and visualize the results.
@@ -379,24 +379,25 @@ def analyze_and_visualize_similarity_matrix(
 
     # Collect valid clustering results: we store tuple (random_state, labels, silhouette, calinski, davies)
     results = []
-    for rs in range(1000):
-        clustering = SpectralClustering(
-            n_clusters=n_clusters,
-            affinity='precomputed',
-            random_state=rs,
-            assign_labels='kmeans'
-        ).fit(similarity_matrix)
+    for n_clusters in range(1, 10):
+        for rs in range(1000):
+            clustering = SpectralClustering(
+                n_clusters=n_clusters,
+                affinity='precomputed',
+                random_state=rs,
+                assign_labels='kmeans'
+            ).fit(similarity_matrix)
 
-        if len(np.unique(clustering.labels_)) > 1:
-            # Compute distance matrix from similarity matrix
-            dist = 1.0 - similarity_matrix
-            np.fill_diagonal(dist, 0)
-            bal = balanced_clustering_score(clustering.labels_)
-            sil = silhouette_score(dist, clustering.labels_, metric='precomputed')
-            cal = calinski_harabasz_score(dist, clustering.labels_)
-            dav = davies_bouldin_score(dist, clustering.labels_)  # lower is better
-            results.append((rs, clustering.labels_, bal, sil, cal, dav))
-            # print(f"Random state: {rs}, balanced: {bal:.4f}, silhouette: {sil:.4f}, calinski: {cal:.4f}, davies: {dav:.4f}")
+            if len(np.unique(clustering.labels_)) > 1:
+                # Compute distance matrix from similarity matrix
+                dist = 1.0 - similarity_matrix
+                np.fill_diagonal(dist, 0)
+                bal = balanced_clustering_score(clustering.labels_)
+                sil = silhouette_score(dist, clustering.labels_, metric='precomputed')
+                cal = calinski_harabasz_score(dist, clustering.labels_)
+                dav = davies_bouldin_score(dist, clustering.labels_)  # lower is better
+                results.append((rs, clustering.labels_, bal, sil, cal, dav))
+                # print(f"Random state: {rs}, balanced: {bal:.4f}, silhouette: {sil:.4f}, calinski: {cal:.4f}, davies: {dav:.4f}")
 
     if not results:
         raise ValueError("No valid clustering found.")
@@ -415,7 +416,7 @@ def analyze_and_visualize_similarity_matrix(
     norm_dav = normalize_array(dav_scores)
 
     # Compute the mean normalized score for each valid clustering
-    mean_norm = 4.5 * norm_bal + norm_sil + norm_cal - norm_dav
+    mean_norm = 1.0 * norm_bal + norm_sil + norm_cal - norm_dav
     best_idx = np.argmax(mean_norm)
 
     cluster_labels = labels_list[best_idx]
@@ -484,13 +485,13 @@ def analyze_and_visualize_similarity_matrix(
     # 2. Network graph visualization
     G_layout = G.copy()
 
-    # Modify edge weights based on cluster membership
-    for u, v in G_layout.edges():
-        # Check if nodes belong to the same cluster
-        if G_layout.nodes[u]['cluster'] == G_layout.nodes[v]['cluster']:
-            # Reduce distance (increase attraction) for nodes in same cluster
-            # Original weight is between 0-1, use a scaling factor to emphasize cluster relationships
-            G_layout[u][v]['weight'] = G_layout[u][v]['weight'] * 2.6  # Amplify intra-cluster edge weights
+    # # Modify edge weights based on cluster membership
+    # for u, v in G_layout.edges():
+    #     # Check if nodes belong to the same cluster
+    #     if G_layout.nodes[u]['cluster'] == G_layout.nodes[v]['cluster']:
+    #         # Reduce distance (increase attraction) for nodes in same cluster
+    #         # Original weight is between 0-1, use a scaling factor to emphasize cluster relationships
+    #         G_layout[u][v]['weight'] = G_layout[u][v]['weight'] * 2.8  # Amplify intra-cluster edge weights
 
     # Use spring layout with the modified weights
     # In spring layout, higher weights mean stronger springs (shorter distances)
@@ -507,9 +508,9 @@ def analyze_and_visualize_similarity_matrix(
 
     # Create a list of colors for the clusters
     cluster_colors = [
+        (0.5803921568627451,  0.403921568627451,   0.7411764705882353  ),  # 9467bd purple
         (1.0,                 0.4980392156862745,  0.054901960784313725),  # ff7f0e orange
         (0.8392156862745098,  0.15294117647058825, 0.1568627450980392  ),  # d62728 red
-        (0.5803921568627451,  0.403921568627451,   0.7411764705882353  ),  # 9467bd purple
         (0.238, 0.544,  0.789  ),  # 3d8bc9 light blue
         (0.17254901960784313, 0.6274509803921569,  0.17254901960784313 ),  # 2ca02c green
         (0.7372549019607844,  0.7411764705882353,  0.13333333333333333 ),  # bcbd22 yellow
