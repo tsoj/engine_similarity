@@ -379,7 +379,7 @@ def analyze_and_visualize_similarity_matrix(
 
     # Collect valid clustering results: we store tuple (random_state, labels, silhouette, calinski, davies)
     results = []
-    for n_clusters in range(1, 10):
+    for n_clusters in range(1, min(10, similarity_matrix.shape[0] - 1)):
         for rs in range(1000):
             clustering = SpectralClustering(
                 n_clusters=n_clusters,
@@ -525,9 +525,9 @@ def analyze_and_visualize_similarity_matrix(
 
     # Create a list of colors for the clusters
     cluster_colors = [
-        (0.5803921568627451,  0.403921568627451,   0.7411764705882353  ),  # 9467bd purple
-        (1.0,                 0.4980392156862745,  0.054901960784313725),  # ff7f0e orange
         (0.8392156862745098,  0.15294117647058825, 0.1568627450980392  ),  # d62728 red
+        (1.0,                 0.4980392156862745,  0.054901960784313725),  # ff7f0e orange
+        (0.5803921568627451,  0.403921568627451,   0.7411764705882353  ),  # 9467bd purple
         (0.238, 0.544,  0.789  ),  # 3d8bc9 light blue
         (0.17254901960784313, 0.6274509803921569,  0.17254901960784313 ),  # 2ca02c green
         (0.7372549019607844,  0.7411764705882353,  0.13333333333333333 ),  # bcbd22 yellow
