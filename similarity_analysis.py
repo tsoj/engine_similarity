@@ -454,7 +454,7 @@ def analyze_and_visualize_similarity_matrix(
 
 def main():
     parser = argparse.ArgumentParser(description='Clone GitHub repos, find search files, analyze similarity and visualize clusters.')
-    parser.add_argument('--intput-dir', type=str, required=True)
+    parser.add_argument('input-dir', type=str, required=True)
     parser.add_argument('--output-graph', type=str, default=None,
                       help='Output file for the graph visualization')
     args = parser.parse_args()
@@ -467,8 +467,8 @@ def main():
     embeddings = []
     label_list = []
 
-    for file_name in tqdm(list(os.listdir(args.intput_dir))):
-        if not os.path.isfile(os.path.join(args.intput_dir, file_name)):
+    for file_name in tqdm(list(os.listdir(args.input_dir))):
+        if not os.path.isfile(os.path.join(args.input_dir, file_name)):
             continue
 
     #for file_info in tqdm(all_file_infos):
