@@ -160,16 +160,16 @@ def find_search_files(repo_dir: str, repo_name: str) -> List[str]:
 
 def load_model() -> List[SentenceTransformer]:
     model_names = [
-        # # "sentence-transformers/sentence-t5-xl",
-        # "sentence-transformers/sentence-t5-xxl",
-        # "sentence-transformers/all-distilroberta-v1",
-        # "sentence-transformers/all-MiniLM-L12-v2",
-        # # # "sentence-transformers/all-MiniLM-L6-v2",
-        # "sentence-transformers/all-mpnet-base-v2",
-        # "Alibaba-NLP/gte-Qwen2-7B-instruct",
-        # "Kwaipilot/OASIS-code-embedding-1.5B",
-        # "Salesforce/SFR-Embedding-Code-2B_R",
-        # "flax-sentence-embeddings/st-codesearch-distilroberta-base",
+        # "sentence-transformers/sentence-t5-xl",
+        "sentence-transformers/sentence-t5-xxl",
+        "sentence-transformers/all-distilroberta-v1",
+        "sentence-transformers/all-MiniLM-L12-v2",
+        # # "sentence-transformers/all-MiniLM-L6-v2",
+        "sentence-transformers/all-mpnet-base-v2",
+        "Alibaba-NLP/gte-Qwen2-7B-instruct",
+        "Kwaipilot/OASIS-code-embedding-1.5B",
+        "Salesforce/SFR-Embedding-Code-2B_R",
+        "flax-sentence-embeddings/st-codesearch-distilroberta-base",
         "nomic-ai/CodeRankEmbed",
     ]
     print(f"Loading models:", model_names)
