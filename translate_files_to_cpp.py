@@ -77,7 +77,7 @@ def create_batch_request(batch_items: List[Dict[str, Any]], client):
     batch = client.messages.batches.create(requests=requests)
     return batch.id
 
-def wait_for_batch_completion(batch_id: str, client, max_wait_time: int = 600, check_interval: int = 10):
+def wait_for_batch_completion(batch_id: str, client, max_wait_time: int = 100_000, check_interval: int = 10):
     """
     Waits for the batch to complete processing.
     Returns True if the batch completed, False if it timed out.
@@ -207,10 +207,14 @@ def main():
         sys.exit(1)
 
     # Wait for batch processing to complete
-    batch_completed = wait_for_batch_completion(batch_id, client)
-    if not batch_completed:
-        print("Batch processing did not complete in the allocated time.")
-        sys.exit(1)
+    while True:
+        try:
+            batch_completed = wait_for_batch_completion(batch_id, client)
+            if batch_completed:
+                break
+        except Exception as e:
+            print("Failed batch retrieval:", e)
+            time.sleep(10)
 
     # Process and save results
     process_batch_results(batch_id, client, file_mapping)

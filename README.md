@@ -109,7 +109,6 @@ https://github.com/kz04px/4ku \
 https://github.com/TheRealGioviok/Perseus-Engine \
 https://github.com/phenri/glaurung \
 https://github.com/Warpten/Fruit-2.1 \
-https://github.com/official-monty/monty \
 --out-dir ./raw_search_files \
 --temp-dir ./engine_similarity_temp
 
