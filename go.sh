@@ -107,7 +107,7 @@ https://github.com/Warpten/Fruit-2.1 \
 #python -u clang_format_files.py ./translated_search_files ./formatted_search_files
 
 
-python -u similarity_analysis.py ./formatted_search_files --output-graph embeddings.npz
 
+python -u compute_embeddings.py ./formatted_search_files --output_file similarity_graph.png
 
 # python -u visualize_similarity.py embeddings.npz --output-graph similarity_graph.png
