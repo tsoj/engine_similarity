@@ -81,6 +81,7 @@ def analyze_and_visualize_similarity_matrix(similarity_matrix, labels, output_gr
             ).fit(similarity_matrix)
             if len(set(clustering.labels_)) > 1:
                 dist = 1.0 - similarity_matrix
+                np.fill_diagonal(dist, 0)
                 bal = balanced_clustering_score(clustering.labels_)
                 sil = silhouette_score(dist, clustering.labels_, metric='precomputed')
                 cal = calinski_harabasz_score(dist, clustering.labels_)
