@@ -17,3 +17,5 @@ run2.sh
 similarity_graph_pure.*
 similarity_graph_monty.*
 similarity_graph_no_monty.*
+visualize_embeddings_3d.py
+similarity_graph_pure.*
