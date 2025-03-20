@@ -1,3 +1,8 @@
+
+# Chess engine search similarity
+
+![alt text](similarity_graph_March-2025.jpeg)
+
 ## Setup
 
 ```bash
@@ -115,7 +120,3 @@ python -u compute_embeddings.py ./formatted_search_files ./embeddings.npz
 
 python -u visualize_embeddings.py ./embeddings.npz --output-graph ./similarity_graph.png
 ```
-
-## Fancy graph
-
-![alt text](similarity_graph_March-2025.jpeg)
