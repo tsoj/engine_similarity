@@ -16,3 +16,4 @@ go2.sh
 run2.sh
 similarity_graph_pure.*
 similarity_graph_monty.*
+similarity_graph_no_monty.*
