@@ -108,6 +108,6 @@ https://github.com/Warpten/Fruit-2.1 \
 
 
 
-python -u compute_embeddings.py ./formatted_search_files embeddings.npz
+python -u compute_embeddings.py ./formatted_search_files ./embeddings.npz
 
-# python -u visualize_similarity.py embeddings.npz --output-graph similarity_graph.png
+# python -u visualize_similarity.py ./embeddings.npz --output-graph ./similarity_graph.png
