@@ -14,10 +14,10 @@ from tqdm import tqdm
 import matplotlib.pyplot as plt
 import seaborn as sns
 import networkx as nx
-import numpy as np
 from sklearn.cluster import SpectralClustering
 from sklearn.metrics import silhouette_score, calinski_harabasz_score, davies_bouldin_score
 from scipy.cluster import hierarchy
+from matplotlib.collections import LineCollection
 
 def calculate_similarity_rankings(similarity_matrix, labels):
     """Calculate average similarity of each file to all other files and return a ranked list."""
@@ -38,7 +38,6 @@ def normalize_array(values):
 
 def balanced_clustering_score(labels):
     """Compute a clustering score based on the balance of cluster sizes."""
-    import numpy as np
     unique, counts = np.unique(labels, return_counts=True)
     if len(unique) <= 1:
         return 0.0
@@ -49,8 +48,6 @@ def balanced_clustering_score(labels):
 
 def draw_gradient_edge(ax, pos, n1, n2, color1, color2, n_points=100, lw=2, alpha=1.0):
     """Draw an edge with a color gradient between two nodes."""
-    import numpy as np
-    from matplotlib.collections import LineCollection
     x1, y1 = pos[n1]
     x2, y2 = pos[n2]
     x = np.linspace(x1, x2, n_points)
@@ -84,7 +81,6 @@ def analyze_and_visualize_similarity_matrix(similarity_matrix, labels, output_gr
             ).fit(similarity_matrix)
             if len(set(clustering.labels_)) > 1:
                 dist = 1.0 - similarity_matrix
-                import numpy as np
                 bal = balanced_clustering_score(clustering.labels_)
                 sil = silhouette_score(dist, clustering.labels_, metric='precomputed')
                 cal = calinski_harabasz_score(dist, clustering.labels_)
@@ -143,35 +139,51 @@ def analyze_and_visualize_similarity_matrix(similarity_matrix, labels, output_gr
     ax1.set_title("Code Similarity Matrix (Sorted)", fontsize=16)
 
     # Draw cluster boundaries.
-    import numpy as np
     cluster_sizes = np.bincount(np.array(cluster_labels)[idx])
     boundaries = np.cumsum(cluster_sizes)[:-1]
     for boundary in boundaries:
         ax1.axhline(y=boundary, color='red', linestyle='-', linewidth=4)
         ax1.axvline(x=boundary, color='red', linestyle='-', linewidth=4)
 
+
+    G_layout = G.copy()
+    # Modify edge weights based on cluster membership
+    for u, v in G_layout.edges():
+        # Check if nodes belong to the same cluster
+        if G_layout.nodes[u]['cluster'] == G_layout.nodes[v]['cluster']:
+            # Reduce distance (increase attraction) for nodes in same cluster
+            # Original weight is between 0-1, use a scaling factor to emphasize cluster relationships
+            G_layout[u][v]['weight'] = G_layout[u][v]['weight'] * 2.5  # Amplify intra-cluster edge weights
+
     # Network graph visualization using spring layout.
-    pos = nx.spring_layout(G, weight='weight', k=0.4, iterations=100, seed=42)
+    pos = nx.spring_layout(G_layout, weight='weight', k=0.4, iterations=100, seed=42)
+
     cluster_colors = [
-        (0.839, 0.153, 0.157), (0.173, 0.627, 0.173),
-        (0.580, 0.404, 0.741), (0.238, 0.544, 0.789),
-        (1.0, 0.498, 0.055), (0.737, 0.741, 0.133),
-        (0.498, 0.498, 0.498), (0.090, 0.745, 0.812),
-        (0.122, 0.467, 0.706), (0.890, 0.467, 0.761),
-        (0.549, 0.337, 0.294)
+        (0.17254901960784313, 0.6274509803921569,  0.17254901960784313 ),  # 2ca02c green
+        (0.8392156862745098,  0.15294117647058825, 0.1568627450980392  ),  # d62728 red
+        (0.5803921568627451,  0.403921568627451,   0.7411764705882353  ),  # 9467bd purple
+        (0.238, 0.544,  0.789  ),                                          # 3d8bc9 light blue
+        (1.0,                 0.4980392156862745,  0.054901960784313725),  # ff7f0e orange
+        (0.7372549019607844,  0.7411764705882353,  0.13333333333333333 ),  # bcbd22 yellow
+        (0.4980392156862745,  0.4980392156862745,  0.4980392156862745  ),  # 7f7f7f grey
+        (0.09019607843137255, 0.7450980392156863,  0.8117647058823529),    # 17becf türkis
+        (0.12156862745098039, 0.4666666666666667,  0.7058823529411765  ),  # 1f77b4 blue
+        (0.8901960784313725,  0.4666666666666667,  0.7607843137254902  ),  # e377c2 pink
+        (0.5490196078431373,  0.33725490196078434, 0.29411764705882354 ),  # 8c564b brown
     ]
+
     node_colors = [cluster_colors[cl % len(cluster_colors)] for cl in cluster_labels]
     for n1, n2 in G.edges():
-        alpha = G[n1][n2]['weight'] ** 5.0
-        width = max(0.8, alpha * 7.0)
+        alpha = G[n1][n2]['weight'] ** 4.0
+        width = max(0.8, alpha * 15.0)
         color1 = node_colors[n1]
         color2 = node_colors[n2]
-        draw_gradient_edge(ax2, pos, n1, n2, color1, color2, n_points=200, lw=width, alpha=alpha)
+        draw_gradient_edge(ax2, pos, n1, n2, color2, color1, n_points=200, lw=width, alpha=alpha)
     nx.draw_networkx_nodes(G, pos, node_color=node_colors, ax=ax2, node_size=2000)
     nx.draw_networkx_labels(G, pos, labels={i: label for i, label in enumerate(labels)}, font_size=26, ax=ax2)
     ax2.axis('off')
     plt.tight_layout()
-    plt.savefig(output_graph, dpi=300, bbox_inches='tight')
+    plt.savefig(output_graph, dpi=250, bbox_inches='tight')
     plt.close()
     print(f"Visualization saved to {output_graph}")
 

@@ -1,6 +1,6 @@
 # Results from March 2025
 
-Files ranked by average similarity to other files (most to least similar):
+Files ranked by average similarity:
 1. Clover (Avg similarity: 0.9349)
 2. rice (Avg similarity: 0.9315)
 3. elixir (Avg similarity: 0.9314)
@@ -58,7 +58,7 @@ Files ranked by average similarity to other files (most to least similar):
 55. akimbo (Avg similarity: 0.9088)
 56. Zataxx (Avg similarity: 0.9087)
 57. Rubi (Avg similarity: 0.9078)
-58. Potential (Avg similarity: 0.9074)
+58. Potential (Avg similarity: 0.9073)
 59. sacre_dieu (Avg similarity: 0.9061)
 60. Bit-Genie (Avg similarity: 0.9041)
 61. peacekeeper (Avg similarity: 0.9036)

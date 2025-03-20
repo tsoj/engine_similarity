@@ -10,3 +10,7 @@ raw_search_files_XXX
 raw_search_files
 translated_search_files
 formatted_search_files
+embeddings.npz
+similarity_graph.png
+go2.sh
+run2.sh
