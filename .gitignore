@@ -11,6 +11,7 @@ raw_search_files
 translated_search_files
 formatted_search_files
 embeddings.npz
-similarity_graph.png
+similarity_graph.*
 go2.sh
 run2.sh
+similarity_graph_pure.*
